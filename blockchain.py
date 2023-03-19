@@ -1,8 +1,5 @@
 import hashlib
-import secrets
-import random
 import time
-import string
 
 
 class block:
@@ -10,7 +7,7 @@ class block:
     timestamp = None
     prevHash = None
     hash = None
-    data = ""
+    data = "" #In order to implement merkel trees this has to be turned into a tuple of transactions, where each is hashed and added as the merkel root of the block
     next = None
 
 
