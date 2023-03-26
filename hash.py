@@ -4,6 +4,17 @@ import random
 import time
 import string
 
+def hashData(data):
+    string = ""
+    if type(data) == list:
+        for i in data:
+            string += i
+        hash = hashlib.sha256(string.encode()).hexdigest()
+        return hash
+
+    hash = hashlib.sha256(data.encode()).hexdigest()
+    return hash
+
 def hash_Input(zeros):
     attempts = 0
     str = ''
@@ -22,4 +33,5 @@ def main():
     randomMessage, hash = hash_Input(zeros)
     print(f"The message {randomMessage} generates the hash: {hash}")
 
-main()
+if __name__ == "__main__":
+    main()
