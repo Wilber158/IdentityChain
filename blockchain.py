@@ -57,10 +57,10 @@ def hashData(data):
     return hash
 
 def createMerkle(transactions):
-    merkel = None
+    merkel = ""
     for i in transactions:
         i = hashData(i)
-        merkel += i
+        merkel+= i
     return merkel
 
 
@@ -81,6 +81,13 @@ def main():
         chain.addBlock(data)
 
     printBlockchain(chain)
+    string = ""
+    while string is not "0":
+        string = input("Enter a transaction you want to verify is in the blockchain: ")
+        for i in chain.blocks:
+            if i.verifyTransaction(string):
+                print("found!!!!")
+        print("Not in blockchain")
 
     
 if __name__ == "__main__":
