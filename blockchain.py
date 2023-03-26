@@ -4,12 +4,19 @@ import time
 
 class block:
     def __init__(self, transactions, previous_hash):
-        block_number = None
-        merkle_root = None
-        timestamp = None
+        self.block_number = None
+        self.merkle_root = createMerkle(transactions)
+        self.timestamp = None
         self.previous_hash = previous_hash 
-        hash = None
+        self.hash = None
         self.transactions = transactions #In order to implement merkel trees this has to be turned into a tuple of transactions, where each is hashed and added as the merkel root of the block
+    
+    def verifyTransaction(self, transaction):
+        hash_of_transaction = hashData(transaction)
+        if hash_of_transaction in self.merkle_root:
+            return True
+        return False
+
     
 
 class blockChain:
@@ -50,7 +57,11 @@ def hashData(data):
     return hash
 
 def createMerkle(transactions):
-    pass
+    merkel = None
+    for i in transactions:
+        i = hashData(i)
+        merkel += i
+    return merkel
 
 
 
