@@ -1,0 +1,18 @@
+body{
+    background-color: brown;
+}
+div{
+    display: flex;
+    /* flex-wrap: wrap; */
+    /* width: 200px; */
+    height:200px;
+    justify-content: center;
+}
+p{
+    width: 300px;
+    margin: auto;
+    text-align: center;
+    background-color: blanchedalmond;
+    border-radius: 15px;
+    font-size: 30px;
+}
