@@ -104,14 +104,18 @@ class P2PNetwork:
         d = self.kademlia.set(ip, f"{ip}:{port}")
         d.addCallback(self.added_peer_to_dht)
 
-    def outbound_node_disconnected(self, connected_node):
-        print("outbound_node_disconnected: " + connected_node.id)
+    def added_peer_to_dht(self, result):
+        print("Added peer to DHT")
 
-    def node_message(self, connected_node, data):
-        print("node_message from " + connected_node.id + ": " + str(data))
-        
-    def node_disconnect_with_outbound_node(self, connected_node):
-        print("node wants to disconnect with oher outbound node: " + connected_node.id)
-        
-    def node_request_to_stop(self):
-        print("node is requested to stop!")
+    def find_nearest_peer(self):
+        d = self.kademlia.get(self.ip)
+        d.addCallback(self.found_nearest_peer)
+        d.addErrback(self.no_nearest_peer)
+
+    def found_nearest_peer(self, result):
+        print(f"Found nearest peer: {result}")
+        ip, port = result.split(":")
+        self.connect_to_peer(ip, int(port))
+
+    def no_nearest_peer(self, failure):
+        print("No nearest peer found")
