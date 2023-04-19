@@ -15,8 +15,9 @@ class MyOwnPeer2PeerNode (Node):
         print("inbound_node_disconnected: " + connected_node.id)
 
     def outbound_node_disconnected(self, connected_node):
-        print("outbound_node_disconnected: " + connected_node.id)
-
+        print(f"Node {self} disconnected: {node}")
+        if self. and self.host_node.id == node.id:
+            self.migrate_host()
     def node_message(self, connected_node, data):
         print("node_message from " + connected_node.id + ": " + str(data))
         
