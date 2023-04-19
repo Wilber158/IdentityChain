@@ -1,14 +1,29 @@
 from Crypto.PublicKey import ECC
 from Crypto.Signature import DSS
+from Crypto.Protocol.KDF import HKDF
 from Crypto.Hash import SHA256
+from Crypto.Random import get_random_bytes
+from mnemonic import Mnemonic
 
+#generate secret phrases
+def generateMnemonicPhrase():
+    mnemo = Mnemonic(language="english")
+    words = mnemo.generate(strength=256)
+    mnemonic_seed = mnemo.to_seed(words, passphrase="")
+    return list
+
+
+def generate_Mnemonic_Key(mnemo_seed, filename):
+    salt = get_random_bytes(16)
+    private_key = HKDF(mnemo_seed, 32, salt, SHA256)
+    key = ECC.construct(curve="P-256", d=private_key)
+    with open(filename, 'wt') as f:
+        f.write(key.export_key(format='PEM'))
 
 def generate_private_key(filename):
     key = ECC.generate(curve='P-256')
     with open(filename, 'wt') as f:
         f.write(key.export_key(format='PEM'))
-    
-
 
 def generate_public_key(priv_dir, pub_dir):
     with open(priv_dir, 'rt') as f:

@@ -11,7 +11,7 @@ import sys
 import time
 sys.path.insert(0, '..') # Import the files where the modules are located
 
-from MyOwnPeer2PeerNode import MyOwnPeer2PeerNode
+from protocol import MyOwnPeer2PeerNode
 
 node_1 = MyOwnPeer2PeerNode("127.0.0.1", 8001, 1)
 node_2 = MyOwnPeer2PeerNode("127.0.0.1", 8002, 2)
