@@ -63,8 +63,6 @@ def verification_function(pub_dir, signature, transaction):
     except ValueError:
         print("Signiture invalid!") #return false
 
-
-
 def main():
     privkey = 'privatekey.pem'
     pubkey = 'publickey.pem'

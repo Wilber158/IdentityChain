@@ -21,6 +21,7 @@ class BlockChain:
 
         #incrementing the number of blocks in the chain
         self.blockchain_size += 1
+    
 
 
 def printBlockchain(chain):

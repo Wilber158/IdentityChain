@@ -1,20 +1,11 @@
 import keys
 
 class Transactions:
-<<<<<<< Updated upstream
-    def __init__(self, sender, receiver, transaction):
+    def __init__(self, sender, receiver, type, fields, transaction, signiture):
         self.sender_public_key = sender
         self.receiver_public_key = receiver
-        self.transaction_data = transaction
-
-    def encrypt(transaction):
-        return keys.generate_signiture()
-=======
-    def __init__(self, sender, receiver, type, transaction):
-        self.sender = sender
-        self.receiver = receiver
+        self.signiture = signiture
         self.type = type
-        self.transaction = transaction
->>>>>>> Stashed changes
-
+        self.transaction_data = transaction
+        self.fields = fields #fields being modified or retrieved ex: name, ssn, address, DOB:....
     
