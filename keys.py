@@ -59,9 +59,9 @@ def verification_function(pub_dir, signature, transaction):
     #verify the signiture
     try:
         verifier.verify(hash, signature)
-        print("Signiture is valid!") #return true
+        return True
     except ValueError:
-        print("Signiture invalid!") #return false
+        return False
 
 def main():
     privkey = 'privatekey.pem'

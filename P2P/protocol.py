@@ -4,6 +4,9 @@ import json
 from queue import Queue
 from kademlia.network import Server
 from twisted.internet import reactor, defer
+from kademlia.node import Node
+import keys
+
 
 class P2PNetwork:
     def __init__(self, blockchain, ip, port):
@@ -11,7 +14,7 @@ class P2PNetwork:
         self.ip = ip
         self.port = port
         self.peers = []
-        self.incoming_messages = Queue()
+        self.mempool = []
 
     def start(self):
         server_thread = threading.Thread(target=self.listen_for_connections)
@@ -65,19 +68,31 @@ class P2PNetwork:
         self.peers.remove(client_socket)
         print("Peer disconnected")
 
-    def broadcast(self, message):
-        for peer in self.peers:
+    def broadcast(self, message, num_neighbors=3):
+        nearest_nodes = self.find_nearest_neighbors(num_neighbors)
+        for node in nearest_nodes:
             try:
-                peer.sendall(json.dumps(message).encode())
+                ip, port = node.addr
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as peer_socket:
+                    peer_socket.connect((ip, port))
+                    peer_socket.sendall(json.dumps(message).encode())
+                    print(f"Sent message to {ip}:{port}")
             except Exception as e:
-                print(f"Error sending message: {e}")
+                print(f"Error sending message to {ip}:{port}: {e}")
 
-    def process_message(self, message):
-        if message["type"] == "new_block":
-            block = message["data"]
-            if self.blockchain.validate_and_add_block(block):
-                print("New block added to the blockchain")
-                self.broadcast(message) 
+    def process_transaction(self, transaction):
+        public_key = transaction.sender_public_key
+        signiture = transaction.signiture
+        data = transaction.transaction_data
+        isValid = keys.verification_function(public_key, signiture, data)
+        if isValid:
+            self.mempool.append(transaction)
+            self.broadcast(transaction)
+    
+    def process_newBlock(self, block):
+        
+        
+
 
     def send_new_block(self, block):
         message = {
@@ -106,6 +121,11 @@ class P2PNetwork:
 
     def added_peer_to_dht(self, result):
         print("Added peer to DHT")
+
+    def find_nearest_neighbors(self, num_neighbors):
+        current_node = Node(self.kademlia.node.long_id, (self.ip, self.port))
+        nearest_nodes = self.kademlia.routing_table.find_neighbors(current_node, num_neighbors)
+        return nearest_nodes
 
     def find_nearest_peer(self):
         d = self.kademlia.get(self.ip)
