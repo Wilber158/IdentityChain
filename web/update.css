@@ -1,0 +1,42 @@
+body{
+    background-color: white;
+    
+}
+h1{
+    display: flex;
+    justify-content: center;
+    background-color: white;
+    margin: auto;
+    padding: 10px;
+    padding-bottom: 100px;
+    border-radius: 15px;
+}
+.PublicKey{
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+.Verification{
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+}
+.UserInput{
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    flex-direction: row;
+}
+button{
+    background-color: #5c6bc0;
+    color: #fff;
+    font-size: 1.5rem;
+    padding: 10px;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    width: 200px;
+    height: 50px;
+    text-align: center;
+}
