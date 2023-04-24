@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register - Digital Identity Blockchain</title>
+    <link rel="stylesheet" href="main.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Register</h1>
+        <div class="mnemonic-container" id="mnemonic-phrase"></div>
+        <div class="file-container">
+            <label for="private-key-dir">Store private key:</label>
+            <button class="action-btn round-btn" id="select-dir-btn" onclick="selectDirectory()">Select directory</button>
+        </div>
+        <button class="action-btn round-btn" id="confirm-btn">Confirm</button>
+    </div>
+    <script src="/eel.js"></script>
+    <script src="register.js"></script>
+</body>
+</html>

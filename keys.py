@@ -8,9 +8,9 @@ from mnemonic import Mnemonic
 #generate secret phrases
 def generateMnemonicPhrase():
     mnemo = Mnemonic(language="english")
-    words = mnemo.generate(strength=256)
+    words = mnemo.generate(strength=128)
     mnemonic_seed = mnemo.to_seed(words, passphrase="")
-    return list
+    return words
 
 
 def generate_Mnemonic_Key(mnemo_seed, filename):
