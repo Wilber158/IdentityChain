@@ -1,4 +1,4 @@
 import eel
 
 eel.init('web')
-eel.start('login.html')
+eel.start('main.html')

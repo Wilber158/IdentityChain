@@ -21,6 +21,9 @@ class BlockChain:
 
         #incrementing the number of blocks in the chain
         self.blockchain_size += 1
+    def verify_add_block(self, block):
+        prevHash = self.blocks[-1].hash
+        
     
 
 
