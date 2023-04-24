@@ -8,9 +8,9 @@ from mnemonic import Mnemonic
 #generate secret phrases
 def generateMnemonicPhrase():
     mnemo = Mnemonic(language="english")
-    words = mnemo.generate(strength=256)
-    mnemonic_seed = mnemo.to_seed(words, passphrase="")
-    return list
+    words = mnemo.generate(strength=128).split()
+    mnemonic_seed = mnemo.to_seed(" ".join(words), passphrase="")
+    return words
 
 
 def generate_Mnemonic_Key(mnemo_seed, filename):
@@ -64,6 +64,9 @@ def verification_function(pub_dir, signature, transaction):
         return False
 
 def main():
+    for i in generateMnemonicPhrase():
+        print(f"{i}")
+
     privkey = 'privatekey.pem'
     pubkey = 'publickey.pem'
     generate_private_key(privkey)
