@@ -1,6 +1,6 @@
 document.getElementById("register-btn").addEventListener("click", function() {
     // Add your register button functionality here
-    window.location.href = "register.html";
+    window.location.href = "regInfo.html";
 });
 
 document.getElementById("share-btn").addEventListener("click", function() {
