@@ -92,6 +92,7 @@ class P2PNetwork:
     def process_newBlock(self, block):
         
         
+        
 
 
     def send_new_block(self, block):
