@@ -91,11 +91,14 @@
             event.preventDefault();
 
             if (publicKey == "" || privateKey== "") {
-                alert("Ensure you input a value in both fields!");
+                alert("Please fill in all forms");
             } 
             else {
             // perform operation with form input
-            alert("This form has been successfully submitted!");
+            alert("You have successfully shared encrypted data!");
+
+
+            
             console.log(`This form has a username of ${username.value} and password of ${password.value}`);
                 username.value = "";
                 password.value = "";
