@@ -19,13 +19,7 @@ class P2PNetwork:
 
         sync_thread = threading.Thread(target=self.start_sync, args=(60,))  # Sync every 60 seconds
         sync_thread.start()
-
-        while True:
-            print("Enter IP address and port of a peer to connect to (format: IP:PORT):")
-            peer = input()
-            ip, port = peer.split(":")
-            self.connect_to_peer(ip, int(port))
-
+        
     def request_sync(self):
         message = {
             "type": "sync_request"

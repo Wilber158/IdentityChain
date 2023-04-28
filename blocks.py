@@ -7,13 +7,8 @@ class Block:
         self.timestamp = timestamp
         self.nonce = nonce
         self.previous_hash = previous_hash 
-        self.hash = hashData(f"{block_number}{hashData(transactions)}{self.merkle_root}{timestamp}{previous_hash}{nonce}")
+        self.hash = hashData(f"{block_number}{hashData(transactions)}{timestamp}{previous_hash}{nonce}")
     
-    def verifyTransaction(self, transaction):
-        hash_of_transaction = hashData(transaction)
-        if hash_of_transaction in self.merkle_root:
-            return True
-        return False
     
     def mine(self, difficulty): #sets the hash value to its appropriate value
         while self.hash[:difficulty] != '0' * difficulty:
