@@ -7,7 +7,4 @@ class Transactions:
         self.signiture = signiture
         self.type = type
         self.transaction_data = transaction
-        self.fields = fields #fields being modified or retrieved ex: name, ssn, address, DOB:....
-        self.nonce =
-    def get_nonce()
-    
+        self.fields = fields #fields being modified or retrieved ex: name, ssn, address, DOB:....    
