@@ -4,6 +4,7 @@ from hash import hashData
 from blocks import Block
 from transactions import Transactions
 
+
 class BlockChain:
     def __init__(self):
         #creates genesis block, while initializing default variables

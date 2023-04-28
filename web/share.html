@@ -58,7 +58,7 @@
     <div class="UserInput">
         <form>
             <div class="form-group">
-                <label for="Privae">Your Private Key:</label>
+                <label for="Private">Your Private Key:</label>
                 <input type="text" id="Private" name="Private">
             </div>
             <div class="form-group">
@@ -72,38 +72,32 @@
         </form>
     </div>
 
-
-    <button type="submit">Encrypted Data to be Shared</button>
+    <button type="submit" id="submit">Encrypted Data to be Shared</button>
     <div ></div>
     <script>
-        const submitButton = document.querySelector('button[type="submit"]');
-
-        const privateKeyInput = document.getElementById("Private");
-        const privateKey = privateKeyInput.value;
-
-        const publicKeyInput = document.getElementById("Public");
-        const publicKey = publicKeyInput.value;
-
-        const receiverInput = document.getElementById("Receiver");
-        const receiver = receiverInput.value;
-
+        const submitButton = document.getElementById("submit")
         submitButton.addEventListener('click', (event) => {
             event.preventDefault();
+            /*const submitButton = document.querySelector('button[type="submit"]');*/
 
-            if (publicKey == "" || privateKey== "") {
-                alert("Ensure you input a value in both fields!");
+            const privateKeyInput = document.getElementById("Private");
+            const privateKey = privateKeyInput.value;
+
+            const publicKeyInput = document.getElementById("Public");
+            const publicKey = publicKeyInput.value;
+
+            const receiverInput = document.getElementById("Receiver");
+            const receiver = receiverInput.value;
+
+
+            if (publicKey == 111 && privateKey== 111 && receiver == 222) {
+                alert("You have successfully shared encrypted data");
             } 
             else {
             // perform operation with form input
-            alert("This form has been successfully submitted!");
-            console.log(`This form has a username of ${username.value} and password of ${password.value}`);
-                username.value = "";
-                password.value = "";
+            alert("WOMP WOMP");
             }
         });
-
-        
-
     </script>
 </body>
 </html>
