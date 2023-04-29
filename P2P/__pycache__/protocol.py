@@ -8,6 +8,9 @@ import random
 import person
 from person import get_random_people
 import base64
+from signal import signal, SIGPIPE, SIG_DFL  
+signal(SIGPIPE,SIG_DFL)
+  
 
 
 class P2PNetwork:
@@ -23,9 +26,10 @@ class P2PNetwork:
     def start(self):
         server_thread = threading.Thread(target=self.listen_for_connections)
         server_thread.start()
-
         sync_thread = threading.Thread(target=self.start_sync, args=(60,))  # Sync every 60 seconds
         sync_thread.start()
+
+        mine_thread = threading.Thread(target=self.mine_new_block, args=(random.randint(0, 100),))
         
     def request_sync(self):
         message = {
@@ -37,6 +41,10 @@ class P2PNetwork:
         while True:
             time.sleep(sync_interval)
             self.request_sync()
+    
+    def mine_new_block(self):
+        while True:
+
 
     def send_sync_response(self, client_socket):
         message = {
@@ -72,36 +80,38 @@ class P2PNetwork:
             print(f"Error connecting to {ip}:{port}: {e}")
 
     def handle_client(self, client_socket):
-        while True:
-            data = client_socket.recv(4096)
-            print(data)
-            if not data:
-                break
+        try: 
+            while True:
+                data = client_socket.recv(1024)
+                if not data:
+                    break
+                message = data.decode()
+                received_message = json.loads(message)
 
-            message = data.decode()
-            received_message = json.loads(message)
-            print(received_message)
-
-            if received_message["type"] == "new_block":
-                block_data = received_message["data"]
-                block = pickle.loads(block_data)
-                self.process_newBlock(block)
-            elif received_message["type"] == "new_transaction":
-                    transaction_data = received_message["data"]
-                    transaction = pickle.loads(base64.b64decode(transaction_data))
-                    if transaction not in self.mempool:  # Check if the transaction is not already in the mempool
-                        self.process_transaction(transaction)
-            elif received_message["type"] == "sync_request":
-                self.send_sync_response(client_socket)
-            
-            elif received_message["type"] == "sync_response":
-                received_mempool = pickle.loads(received_message["mempool"])
-                received_blockchain = pickle.loads(received_message["blockchain"])
-                self.update_mempool(received_mempool)
-                self.update_blockchain(received_blockchain)
-            else:
-                pass
-                # Process other message types
+                if received_message["type"] == "new_block":
+                    block_data = received_message["data"]
+                    block = pickle.loads(block_data)
+                    self.process_newBlock(block)
+                elif received_message["type"] == "new_transaction":
+                        transaction_data = received_message["data"]
+                        transaction = pickle.loads(base64.b64decode(transaction_data))
+                        if transaction not in self.mempool:  # Check if the transaction is not already in the mempool
+                            self.process_transaction(transaction)
+                elif received_message["type"] == "sync_request":
+                    self.send_sync_response(client_socket)
+                
+                elif received_message["type"] == "sync_response":
+                    received_mempool = pickle.loads(received_message["mempool"])
+                    received_blockchain = pickle.loads(received_message["blockchain"])
+                    self.update_mempool(received_mempool)
+                    self.update_blockchain(received_blockchain)
+                else:
+                    pass
+                    # Process other message types
+        except (BrokenPipeError, ConnectionResetError):
+            print(f"Connection closed by client {client_socket.getpeername()}")
+            client_socket.close()
+            self.peers.remove(client_socket)
             
 
     def broadcast(self, message):
@@ -127,20 +137,28 @@ class P2PNetwork:
         if isValid:
             self.mempool.append(transaction)
             self.send_transaction(transaction)
+
+            
     
     def send_transaction(self, transaction):
         message = {
             "type": "new_transaction",
             "data": base64.b64encode(pickle.dumps(transaction)).decode()
         }
-        for peer_socket in self.peers:
+        peers_to_remove = []
+        for idx, peer_socket in enumerate(self.peers):
             try:
                 peer_socket.sendall(json.dumps(message).encode())
+            except BrokenPipeError as e:
+                print(f"Broken pipe error in send_transaction at index {idx}: {e}")
+                peers_to_remove.append(idx)
             except Exception as e:
-                print(f"Error sending transaction: {e}")
+                print(f"Error sending transaction at index {idx}: {e}")
 
-
-
+        for idx in reversed(peers_to_remove):
+            peer_socket = self.peers.pop(idx)
+            peer_socket.close()
+            print(f"Removed broken connection at index {idx}")
     
     def process_newBlock(self, block):
         if self.blockchain.is_chain_valid():
@@ -198,7 +216,7 @@ class LightNode:
         try:
             full_node_socket.sendall(json.dumps(message).encode())
         except Exception as e:
-            print(f"Error sending transaction: {e}")
+            print(f"Error sending transaction in lightnodes: {e}")
 
 
     def simulate_transactions(self, other_nodes_public_keys):

@@ -42,7 +42,6 @@ def generate_public_key(priv_dir, pub_dir):
         f.write(key.public_key().export_key(format='PEM').decode())
 
 def generate_signiture(priv_dir, transaction):
-    print(priv_dir)
     with open(priv_dir, 'rt') as f:
         priv_key = RSA.import_key(f.read())
     # creates signature object with the private key
