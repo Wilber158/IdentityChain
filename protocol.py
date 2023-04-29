@@ -4,12 +4,17 @@ import json
 import keys
 import pickle
 import time
+import random
+import person
+from person import get_random_people
 
 class P2PNetwork:
-    def __init__(self, blockchain, ip, port):
+    def __init__(self, blockchain, ip, port, public, private):
         self.blockchain = blockchain
         self.ip = ip
         self.port = port
+        self.pub_key = public
+        self.priv_key = private
         self.peers = []
         self.mempool = []
 
@@ -156,3 +161,45 @@ class P2PNetwork:
             "data": block
         }
         self.broadcast(message)
+
+class LightNode:
+    def __init__(self, ip, port, public_key, private_key, full_nodes):
+        self.ip = ip
+        self.port = port
+        self.pub_key = public_key
+        self.priv_key = private_key
+        self.full_nodes = full_nodes
+
+    def connect_to_full_node(self):
+        for node_ip, node_port in self.full_nodes:
+            try:
+                full_node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                full_node_socket.connect((node_ip, node_port))
+                print(f"Light node connected to {node_ip}:{node_port}")
+                return full_node_socket
+            except Exception as e:
+                print(f"Error connecting to {node_ip}:{node_port}: {e}")
+
+    def create_transaction(self, receiver_public_key, transaction_data):
+        transaction = keys.generate_transaction(self.priv_key, receiver_public_key, transaction_data)
+        return transaction
+
+    def send_transaction(self, transaction, full_node_socket):
+        message = {
+            "type": "new_transaction",
+            "data": pickle.dumps(transaction)
+        }
+        try:
+            full_node_socket.sendall(json.dumps(message).encode())
+        except Exception as e:
+            print(f"Error sending transaction: {e}")
+
+    def simulate_transactions(self, other_nodes_public_keys):
+        full_node_socket = self.connect_to_full_node()
+        while True:
+            randomTime =  random.randint(10-100)
+            time.sleep(randomTime)  # Adjust the time between transactions if needed
+            receiver_public_key = random.choice(other_nodes_public_keys)
+            transaction_data = f"{self.pub_key[:8]} sent coins to {receiver_public_key[:8]}"
+            transaction = self.create_transaction(receiver_public_key, transaction_data)
+            self.send_transaction(transaction, full_node_socket)

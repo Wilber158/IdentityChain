@@ -4,6 +4,7 @@ from Crypto.Protocol.KDF import HKDF
 from Crypto.Hash import SHA256
 from Crypto.Random import get_random_bytes
 from mnemonic import Mnemonic
+import transactions
 
 #generate secret phrases
 def generateMnemonicPhrase():
@@ -13,7 +14,7 @@ def generateMnemonicPhrase():
     return words
 
 
-def generate_Mnemonic_Key(mnemo_seed, filename):
+def generate_Mnemonic_private_key(mnemo_seed, filename):
     salt = get_random_bytes(16)
     private_key = HKDF(mnemo_seed, 32, salt, SHA256)
     key = ECC.construct(curve="P-256", d=private_key)
@@ -62,6 +63,8 @@ def verification_function(pub_dir, signature, transaction):
         return True
     except ValueError:
         return False
+    
+def generate_transaction(priv_key, public_key)
 
 def main():
     privkey = 'privatekey.pem'

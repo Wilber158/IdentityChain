@@ -14,6 +14,13 @@ class BlockChain:
         self.difficulty = 3
     
     def addBlock(self, transactions, nonce):
+        #verify transaction before adding to blockchain
+        for transaction in transactions:
+            if not transaction.verify_signature():
+                print("Invalid transaction signature")
+                return
+
+
         previous_hash = self.blocks[-1].hash
         #creating the block
         new_block = Block(self.blockchain_size, transactions, previous_hash, time.time(), nonce)
