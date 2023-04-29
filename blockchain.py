@@ -2,7 +2,6 @@ import hashlib
 import time
 from hash import hashData
 from blocks import Block
-from transactions import Transactions
 
 
 class BlockChain:

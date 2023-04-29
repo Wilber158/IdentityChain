@@ -5,54 +5,41 @@ from blockchain import BlockChain
 from protocol import P2PNetwork
 from protocol import LightNode
 import keys
-from Crypto.PublicKey import ECC
+from Crypto.PublicKey import RSA
 
 
+def start_node(ip, port, public_key_filename, private_key_filename, blockchain):
+    with open(public_key_filename, 'rt') as f:
+        public_key = f.read()
+    with open(private_key_filename, 'rt') as f:
+        private_key = f.read()
 
-def start_node(ip, port, public_key, private_key, blockchain):
     node = P2PNetwork(blockchain, ip, port, public_key, private_key)
     node.start()
 
-def generate_key_pairs(num_nodes):
-    key_pairs = []
 
-    for _ in range(num_nodes):
-        private_key_filename = 'private_key.pem'
-        public_key_filename = 'public_key.pem'
-
-        keys.generate_private_key(private_key_filename)
-        keys.generate_public_key(private_key_filename, public_key_filename)
-
-        with open(private_key_filename, 'rt') as f:
-            private_key = f.read()
-
-        with open(public_key_filename, 'rt') as f:
-            public_key = f.read()
-
-        key_pairs.append((public_key, private_key))
-
-    return key_pairs
-
+def save_key_to_file(filename, key):
+    with open(filename, 'wt') as f:
+        f.write(key)
 
 def generate_key_pairs(num_nodes):
     key_pairs = []
 
-    for _ in range(num_nodes):
-        private_key_filename = 'private_key.pem'
-        public_key_filename = 'public_key.pem'
+    for i in range(num_nodes):
+        private_key_filename = f'private_key_{i}.pem'
+        public_key_filename = f'public_key_{i}.pem'
 
-        keys.generate_private_key(private_key_filename)
-        keys.generate_public_key(private_key_filename, public_key_filename)
+        key = RSA.generate(2048)
+        private_key = key.export_key(format='PEM').decode()
+        public_key = key.public_key().export_key(format='PEM').decode()
 
-        with open(private_key_filename, 'rt') as f:
-            private_key = f.read()
+        save_key_to_file(private_key_filename, private_key)
+        save_key_to_file(public_key_filename, public_key)
 
-        with open(public_key_filename, 'rt') as f:
-            public_key = f.read()
-
-        key_pairs.append((public_key, private_key))
+        key_pairs.append((public_key_filename, private_key_filename))
 
     return key_pairs
+
 
 
 def create_transaction_and_mine_block(node, sender_private_key, receiver_public_key, transaction_data):
@@ -80,31 +67,29 @@ def test_p2pnetwork():
 
     for port in ports:
         # Generate a key pair for the full node
-        key = ECC.generate(curve='P-256')
-        public_key = key.public_key().export_key(format='PEM')
-        private_key = key.export_key(format='PEM')
+        public_key_filename = f'full_node_public_key_{port}.pem'
+        private_key_filename = f'full_node_private_key_{port}.pem'
+
+        key = RSA.generate(2048)
+        private_key = key.export_key(format='PEM').decode()
+        public_key = key.public_key().export_key(format='PEM').decode()
+
+        save_key_to_file(private_key_filename, private_key)
+        save_key_to_file(public_key_filename, public_key)
 
         # Create a new blockchain instance for the full node
         blockchain = BlockChain()
 
         # Initialize the full node with the blockchain instance, public, and private keys
-        full_node_thread = threading.Thread(target=start_node, args=(blockchain, ip, port, public_key, private_key))
+        full_node_thread = threading.Thread(target=start_node, args=(ip, port, public_key_filename, private_key_filename, blockchain))
         full_node_thread.start()
         time.sleep(1)  # To allow the node to start properly before starting the next one
 
-    for idx, (public_key, private_key) in enumerate(light_node_key_pairs):
-        light_node = LightNode(ip, 6000 + idx, public_key, private_key, [(ip, port) for port in ports])
+    for idx, (public_key_filename, private_key_filename) in enumerate(light_node_key_pairs):
+        light_node = LightNode(ip, 6000 + idx, public_key_filename, private_key_filename, [(ip, port) for port in ports])
         light_node_thread = threading.Thread(target=light_node.simulate_transactions, args=(light_nodes_public_keys,))
         light_node_thread.start()
         time.sleep(1)  # To allow the light node to start properly before starting the next one
-
-if __name__ == "__main__":
-    test_p2pnetwork()
-
-
-
-    
-
 
 if __name__ == "__main__":
     test_p2pnetwork()

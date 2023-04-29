@@ -7,6 +7,8 @@ import time
 import random
 import person
 from person import get_random_people
+import base64
+
 
 class P2PNetwork:
     def __init__(self, blockchain, ip, port, public, private):
@@ -71,44 +73,40 @@ class P2PNetwork:
 
     def handle_client(self, client_socket):
         while True:
-            try:
-                data = client_socket.recv(1024)
-                if not data:
-                    break
+            data = client_socket.recv(4096)
+            print(data)
+            if not data:
+                break
 
-                message = data.decode()
-                received_message = json.loads(message)
+            message = data.decode()
+            received_message = json.loads(message)
+            print(received_message)
 
-                if received_message["type"] == "new_block":
-                    block_data = received_message["data"]
-                    block = pickle.loads(block_data)
-                    self.process_newBlock(block)
-                elif received_message["type"] == "new_transaction":
+            if received_message["type"] == "new_block":
+                block_data = received_message["data"]
+                block = pickle.loads(block_data)
+                self.process_newBlock(block)
+            elif received_message["type"] == "new_transaction":
                     transaction_data = received_message["data"]
-                    transaction = pickle.loads(transaction_data)
+                    transaction = pickle.loads(base64.b64decode(transaction_data))
                     if transaction not in self.mempool:  # Check if the transaction is not already in the mempool
                         self.process_transaction(transaction)
-                elif received_message["type"] == "sync_request":
-                    self.send_sync_response(client_socket)
-                
-                elif received_message["type"] == "sync_response":
-                    received_mempool = pickle.loads(received_message["mempool"])
-                    received_blockchain = pickle.loads(received_message["blockchain"])
-                    self.update_mempool(received_mempool)
-                    self.update_blockchain(received_blockchain)
-                else:
-                    pass
-                    # Process other message types
-            except Exception as e:
-                print(f"Error receiving data: {e}")
-                break
+            elif received_message["type"] == "sync_request":
+                self.send_sync_response(client_socket)
+            
+            elif received_message["type"] == "sync_response":
+                received_mempool = pickle.loads(received_message["mempool"])
+                received_blockchain = pickle.loads(received_message["blockchain"])
+                self.update_mempool(received_mempool)
+                self.update_blockchain(received_blockchain)
+            else:
+                pass
+                # Process other message types
+            
 
     def broadcast(self, message):
         for peer_socket in self.peers:
-            try:
-                peer_socket.sendall(json.dumps(message).encode())
-            except Exception as e:
-                print(f"Error sending message: {e}")
+            peer_socket.sendall(json.dumps(message).encode())
 
     def update_mempool(self, received_mempool):
         for transaction in received_mempool:
@@ -124,7 +122,7 @@ class P2PNetwork:
     def process_transaction(self, transaction):
         public_key = transaction.sender_public_key
         signature = transaction.signature
-        data = transaction.transaction_data
+        data = transaction.transaction_data #persons object should be here
         isValid = keys.verification_function(public_key, signature, data)
         if isValid:
             self.mempool.append(transaction)
@@ -133,9 +131,16 @@ class P2PNetwork:
     def send_transaction(self, transaction):
         message = {
             "type": "new_transaction",
-            "data": pickle.dumps(transaction)
+            "data": base64.b64encode(pickle.dumps(transaction)).decode()
         }
-        self.broadcast(message)
+        for peer_socket in self.peers:
+            try:
+                peer_socket.sendall(json.dumps(message).encode())
+            except Exception as e:
+                print(f"Error sending transaction: {e}")
+
+
+
     
     def process_newBlock(self, block):
         if self.blockchain.is_chain_valid():
@@ -163,15 +168,15 @@ class P2PNetwork:
         self.broadcast(message)
 
 class LightNode:
-    def __init__(self, ip, port, public_key, private_key, full_nodes):
+    def __init__(self, ip, port, public_key_filename, private_key_filename, peers):
         self.ip = ip
         self.port = port
-        self.pub_key = public_key
-        self.priv_key = private_key
-        self.full_nodes = full_nodes
+        self.public_key = public_key_filename
+        self.private_key = private_key_filename
+        self.peers = peers
 
     def connect_to_full_node(self):
-        for node_ip, node_port in self.full_nodes:
+        for node_ip, node_port in self.peers:
             try:
                 full_node_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 full_node_socket.connect((node_ip, node_port))
@@ -180,27 +185,28 @@ class LightNode:
             except Exception as e:
                 print(f"Error connecting to {node_ip}:{node_port}: {e}")
 
-    def create_transaction(self,transaction_data):
-        transaction = keys.generate_transaction(self.priv_key, self.pub_key, 'store', transaction_data)
+    def create_transaction(self,transaction_data, person):
+        transaction = keys.generate_transaction(self.private_key, self.public_key, 'store', person)
         return transaction
 
-    def send_transaction(self, transaction, full_node_socket):
+    def send_transaction(self, transaction):
+        full_node_socket = self.connect_to_full_node()
         message = {
             "type": "new_transaction",
-            "data": pickle.dumps(transaction)
+            "data": base64.b64encode(pickle.dumps(transaction)).decode()
         }
         try:
             full_node_socket.sendall(json.dumps(message).encode())
         except Exception as e:
             print(f"Error sending transaction: {e}")
 
+
     def simulate_transactions(self, other_nodes_public_keys):
-        full_node_socket = self.connect_to_full_node()
         while True:
-            randomTime =  random.randint(10-100)
+            randomTime = random.randint(10, 30)
             time.sleep(randomTime)  # Adjust the time between transactions if needed
             receiver_public_key = random.choice(other_nodes_public_keys)
             person = get_random_people()
-            ranIndex = random.randint(0-18)
+            ranIndex = random.randint(0, 17)
             transaction = self.create_transaction(receiver_public_key, person[ranIndex])
-            self.send_transaction(transaction, full_node_socket)
+            self.send_transaction(transaction)
