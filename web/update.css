@@ -1,14 +1,19 @@
-body{
+.main{
     background-color: white;
-    
+    display: flex;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-items: center;
 }
+
 h1{
     display: flex;
     justify-content: center;
     background-color: white;
     margin: auto;
     padding: 10px;
-    padding-bottom: 100px;
+    padding-bottom: 30px;
     border-radius: 15px;
 }
 .PublicKey{
@@ -27,7 +32,7 @@ h1{
     padding: 20px;
     flex-direction: row;
 }
-button{
+.btn{
     background-color: #5c6bc0;
     color: #fff;
     font-size: 1.5rem;
@@ -39,4 +44,39 @@ button{
     width: 200px;
     height: 50px;
     text-align: center;
+}
+div{
+    padding: 5px;
+}
+.form-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.form-group label {
+    min-width: 120px;
+    margin-right: 10px;
+}
+
+.form-group input {
+    flex: 1;
+}
+
+form {
+    background-color: #5c6bc0;
+    padding: 20px;
+    border-radius: 10px;
+    color: white;
+    font-size: 18px;
+}
+
+button[type="submit"] {
+    background-color: green;
+    color: white;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-size: 18px;
+    margin-top: 20px;
 }

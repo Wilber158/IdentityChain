@@ -5,7 +5,7 @@
     <title>Sharing</title>
     <link rel="stylesheet" href="update.css">
     <style>
-        body {
+        .main{
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -49,33 +49,54 @@
             font-size: 18px;
             margin-top: 20px;
         }
+        .btn{
+            background-color: #5c6bc0;
+            margin-top: 10px;
+            color: #fff;
+            font-size: 1.5rem;
+            padding: 10px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            width: 200px;
+            height: 50px;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
-    <div>
-        <h1> Share </h1>
-    </div>
-    <div class="UserInput">
-        <form>
-            <div class="form-group">
-                <label for="Private">Your Private Key:</label>
-                <input type="text" id="Private" name="Private">
-            </div>
-            <div class="form-group">
-                <label for="Public">Your Public Key:</label>
-                <input type="text" id="Public" name="Public">
-            </div>
-            <div class="form-group">
-                <label for="Receiver">Send to (Public Key):</label>
-                <input type="text" id="Receiver" name="Receiver">
-            </div>
-        </form>
+    <button id="back-btn">Back</button>
+    <div class="main">
+        <div>
+            <h1> Share </h1>
+        </div>
+        <div class="UserInput">
+            <form>
+                <div class="form-group">
+                    <label for="Private">Your Private Key:</label>
+                    <input type="text" id="Private" name="Private">
+                </div>
+                <div class="form-group">
+                    <label for="Public">Your Public Key:</label>
+                    <input type="text" id="Public" name="Public">
+                </div>
+                <div class="form-group">
+                    <label for="Receiver">Send to (Public Key):</label>
+                    <input type="text" id="Receiver" name="Receiver">
+                </div>
+            </form>
+        </div>
+
+        <button type="submit" id="submit">Encrypted Data to be Shared</button>
+        <button class="btn">Private Key</button>
     </div>
 
-    <button type="submit" id="submit">Encrypted Data to be Shared</button>
-    <button>Private Key</button>
-    <div ></div>
     <script>
+        document.getElementById("back-btn").addEventListener("click", function() {
+            // Add your register button functionality here
+            window.location.href = "main.html";
+        });
         const submitButton = document.getElementById("submit")
         submitButton.addEventListener('click', (event) => {
             event.preventDefault();

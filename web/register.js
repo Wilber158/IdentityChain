@@ -20,4 +20,8 @@ async function selectDirectory(){
     await eel.select_directory()();
 }
 
+document.getElementById("back-btn").addEventListener("click", function() {
+    // Add your register button functionality here
+    window.location.href = "main.html";
+});
 document.getElementById("select-dir-btn").addEventListener("click", selectDirectory);
