@@ -40,8 +40,6 @@ def generate_key_pairs(num_nodes):
 
     return key_pairs
 
-
-
 def create_transaction_and_mine_block(node, sender_private_key, receiver_public_key, transaction_data):
     # Create a transaction
     transaction = keys.generate_transaction(sender_private_key, receiver_public_key, transaction_data)
@@ -58,7 +56,7 @@ def create_transaction_and_mine_block(node, sender_private_key, receiver_public_
 
 def test_p2pnetwork():
     ip = "127.0.0.1"
-    ports = [5001, 5002, 5003, 5004, 5005, 5006, 5007, 5008]
+    ports = [5001, 5002, 5003, 5004, 5005, 5006, 5007, 5008, 5009, 5010, 5011]
     num_light_nodes = 4
 
     # Generate key pairs for light nodes
@@ -93,3 +91,5 @@ def test_p2pnetwork():
 
 if __name__ == "__main__":
     test_p2pnetwork()
+    time.sleep(5)  # Add sleep time before starting light nodes
+
