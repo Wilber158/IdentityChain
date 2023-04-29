@@ -180,8 +180,8 @@ class LightNode:
             except Exception as e:
                 print(f"Error connecting to {node_ip}:{node_port}: {e}")
 
-    def create_transaction(self, receiver_public_key, transaction_data):
-        transaction = keys.generate_transaction(self.priv_key, receiver_public_key, transaction_data)
+    def create_transaction(self,transaction_data):
+        transaction = keys.generate_transaction(self.priv_key, self.pub_key, 'store', transaction_data)
         return transaction
 
     def send_transaction(self, transaction, full_node_socket):
@@ -200,6 +200,7 @@ class LightNode:
             randomTime =  random.randint(10-100)
             time.sleep(randomTime)  # Adjust the time between transactions if needed
             receiver_public_key = random.choice(other_nodes_public_keys)
-            transaction_data = f"{self.pub_key[:8]} sent coins to {receiver_public_key[:8]}"
-            transaction = self.create_transaction(receiver_public_key, transaction_data)
+            person = get_random_people()
+            ranIndex = random.randint(0-18)
+            transaction = self.create_transaction(receiver_public_key, person[ranIndex])
             self.send_transaction(transaction, full_node_socket)
