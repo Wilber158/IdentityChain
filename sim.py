@@ -12,6 +12,9 @@ import json
 from transactions import Transactions
 from blockchain import BlockChain
 from person import get_random_people
+import random
+import os
+import keys
 
 
 
@@ -32,18 +35,21 @@ class P2PNetwork:
             node.receive_block(block)
 
 
+
 class FullNode:
-    def __init__(self):
+    def __init__(self, key_id, key_folder):
+        self.privkey_file = os.path.join(key_folder, f'private_key_full_{key_id}.pem')
+        self.pubkey_file = os.path.join(key_folder, f'public_key_full_{key_id}.pem')
+        keys.generate_private_key(self.privkey_file)
+        keys.generate_public_key(self.privkey_file, self.pubkey_file)
         self.blockchain = BlockChain()
-        self.private_key = RSA.generate(2048)
-        self.public_key = self.private_key.public_key().export_key().decode()
         self.mempool = []
 
-    def create_transaction(self, receiver_public_key, data):
-        hash = SHA256.new(data.encode())
-        signature = PKCS1_PSS.new(self.private_key).sign(hash)
-        return Transactions(self.public_key, receiver_public_key, signature.hex(), data)
 
+    def create_transaction(self, receiver_pubkey_file, data):
+        encrypted_data = keys.encrypt_transaction(receiver_pubkey_file, data)
+        signature = keys.generate_signiture(self.privkey_file, encrypted_data)
+        return Transactions(self.pubkey_file, receiver_pubkey_file, signature, encrypted_data)
     def receive_transaction(self, transaction):
         if transaction.verify_signature():
             self.mempool.append(transaction)
@@ -65,36 +71,62 @@ class FullNode:
         if self.blockchain.is_chain_valid():
             self.blockchain.chain.append(block)
 
+class LightNode:
+    def __init__(self, key_id, key_folder):
+        self.privkey_file = os.path.join(key_folder, f'private_key_light_{key_id}.pem')
+        self.pubkey_file = os.path.join(key_folder, f'public_key_light_{key_id}.pem')
+        keys.generate_private_key(self.privkey_file)
+        keys.generate_public_key(self.privkey_file, self.pubkey_file)
+
+    def create_transaction(self, receiver_pubkey_file, data):
+        encrypted_data = keys.encrypt_transaction(receiver_pubkey_file, data)
+        signature = keys.generate_signiture(self.privkey_file, encrypted_data)
+        return Transactions(self.pubkey_file, receiver_pubkey_file, signature, encrypted_data)
+
+    def send_transaction(self, transaction, network):
+        for node in network.nodes:
+            if isinstance(node, FullNode):
+                node.receive_transaction(transaction)
 
 def main():
     network = P2PNetwork()
+    num_full_nodes = 5
+    num_light_nodes = 10
+    num_transactions = 20
+    key_folder = "keys"
 
-    # Creating nodes
-    node1 = FullNode()
-    node2 = FullNode()
-    node3 = FullNode()
+    # Create the folder if it doesn't exist
+    if not os.path.exists(key_folder):
+        os.makedirs(key_folder)
 
-    # Adding nodes to the network
-    network.add_node(node1)
-    network.add_node(node2)
-    network.add_node(node3)
+    # Creating and adding nodes to the network
+    for i in range(num_full_nodes):
+        full_node = FullNode(i, key_folder)
+        network.add_node(full_node)
 
-    # Node1 creates a transaction and broadcasts it to the network
-    transaction1 = node1.create_transaction(node2.public_key, "Hello from Node1")
-    network.broadcast_transaction(transaction1)
+    for i in range(num_light_nodes):
+        light_node = LightNode(i, key_folder)
+        network.add_node(light_node)
 
-    # Node2 creates a transaction and broadcasts it to the network
-    transaction2 = node2.create_transaction(node3.public_key, "Hello from Node2")
-    network.broadcast_transaction(transaction2)
+    # Randomly pick a light node to transact and a full node to mine
+    people = get_random_people()
+    for _ in range(num_transactions):
+        light_node = random.choice([n for n in network.nodes if isinstance(n, LightNode)])
+        receiver_node = random.choice([n for n in network.nodes if isinstance(n, LightNode) and n != light_node])
+        person_data = random.choice(people)
+        person_data_json = json.dumps(person_data.__dict__)
 
-    # Node3 mines a block from its mempool and broadcasts the block to the network
-    node3.mine_block()
-    new_block = node3.blockchain.chain[-1]
-    network.broadcast_block(new_block)
+        transaction = light_node.create_transaction(receiver_node.pubkey_file, person_data_json)
+        light_node.send_transaction(transaction, network)
 
-    # Print blockchain for all nodes
-    for i, node in enumerate(network.nodes):
-        print(f"Blockchain for Node{i + 1}:")
+        full_node = random.choice([n for n in network.nodes if isinstance(n, FullNode)])
+        full_node.mine_block()
+        new_block = full_node.blockchain.chain[-1]
+        network.broadcast_block(new_block)
+
+    # Print blockchain for all full nodes
+    for i, node in enumerate([n for n in network.nodes if isinstance(n, FullNode)]):
+        print(f"Blockchain for FullNode{i + 1}:")
         for block in node.blockchain.chain:
             print(f"  Block {block.index}: {block.hash}")
 
