@@ -86,21 +86,18 @@ def verification_function(pub_dir, signature, transaction):
         return False
 
 
-def generate_transaction(priv_key_filename, sender_public, type, person, field=None, receiver_public=None):
+def generate_transaction(priv_key_filename, sender_public, person, receiver_public=None):
     with open(priv_key_filename, 'rt') as f:
         priv_key = RSA.import_key(f.read())
-    person = json.dumps(person.__dict__)
-    if(type == 'store'):
+    if receiver_public == None:
         encrypted_t = encrypt_transaction(sender_public, person)
-        transaction = Transactions(sender_public, None, generate_signiture(priv_key_filename, encrypted_t), 'store', encrypted_t, None)
+        transaction = Transactions(sender_public, None, generate_signiture(priv_key_filename, encrypted_t), encrypted_t)
         return transaction
-    elif(type == 'update'):
-        encrypted_t = encrypt_transaction(sender_public, person)
-        transaction = Transactions(sender_public, None, generate_signiture(priv_key_filename, encrypted_t), 'update', encrypted_t, field)
+    else:
+        encrypted_t = encrypt_transaction(receiver_public, person)
+        transaction = Transactions(sender_public, receiver_public, generate_signiture(priv_key_filename, encrypted_t), encrypted_t)
         return transaction
-    encrypted_t = encrypt_transaction(receiver_public, person)
-    transaction = Transactions(sender_public, receiver_public, generate_signiture(priv_key_filename, encrypted_t), 'retrieve', encrypted_t, None)
-    return transaction
+    
 
 def main():
     privkey = 'privatekey.pem'

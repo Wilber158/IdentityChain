@@ -12,7 +12,7 @@ class BlockChain:
         self.blockchain_size = 1
         self.difficulty = 3
     
-    def addBlock(self, transactions, nonce):
+    def addBlock(self, transactions, nonce=0):
         #verify transaction before adding to blockchain
         for transaction in transactions:
             if not transaction.verify_signature():
