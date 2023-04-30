@@ -15,13 +15,9 @@ document.getElementById("update-btn").addEventListener("click", function() {
 
 document.getElementById("manage-btn").addEventListener("click", function() {
     // Add your manage button functionality here
-    window.location.href = ".html"
-});
-
-document.getElementById("trans-btn").addEventListener("click", function() {
-    // Add your manage button functionality here
     window.location.href = "Transactions.html"
 });
+
 
 document.getElementById("block-btn").addEventListener("click", function() {
     // Add your manage button functionality here
