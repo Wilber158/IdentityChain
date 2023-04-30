@@ -3,17 +3,18 @@ import secrets
 import random
 import time
 import string
+import json
 
 def hashData(data):
-    string = ""
-    if type(data) == list:
-        for i in data:
-            string += i
-        hash = hashlib.sha256(string.encode()).hexdigest()
-        return hash
-
-    hash = hashlib.sha256(data.encode()).hexdigest()
-    return hash
+    if type(data) != str:
+        try:
+            data = json.dumps(data, default=lambda x: x.__dict__)
+        except:
+            data = str(data)
+    
+    string = hashlib.sha256()
+    string.update(data.encode('utf-8'))
+    return string.hexdigest()
 
 def hash_Input(zeros):
     attempts = 0

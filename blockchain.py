@@ -30,9 +30,9 @@ class BlockChain:
         self.blockchain_size += 1
 
     def is_chain_valid(self):
-        for i in range(1, len(self.chain)):
-            current_block = self.chain[i]
-            previous_block = self.chain[i - 1]
+        for i in range(1, len(self.blocks)):
+            current_block = self.blocks[i]
+            previous_block = self.blocks[i - 1]
 
             # Check if the current block's hash is correct
             if current_block.hash != current_block.calculate_hash():
@@ -43,33 +43,5 @@ class BlockChain:
                 return False
 
         return True
-    
-
-def printBlockchain(chain):
-    for current in chain.blocks:
-        print(f"Block Number: {current.block_number} \nData: {current.transactions}\nPrevious Hash: {current.previous_hash}\
-            \nHash: {current.hash} \nTimestamp: {current.timestamp}")
 
 
-def main():
-    data = 1
-    iterations = 0
-    chain = BlockChain()
-    print(f"Enter [0] to quit from the program")
-    while not (data == "0"):
-        data = [input("Please enter some data to be added to a blockchain: ")]
-        if(data[0] == "0"): break
-        chain.addBlock(data, 0)
-
-    printBlockchain(chain)
-    string = ""
-    while string != "0":
-        string = input("Enter a transaction you want to verify is in the blockchain: ")
-        for i in chain.blocks:
-            if i.verifyTransaction(string):
-                print("found!!!!")
-        print("Not in blockchain")
-
-    
-if __name__ == "__main__":
-    main()
