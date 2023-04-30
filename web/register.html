@@ -13,14 +13,21 @@
     <div class="container">
         <h1>Register</h1>
         <div class="mnemonic-container" id="mnemonic-phrase"></div>
+        <div class = "file-container">
+            <label for="file_name">File Name:</label>
+            <input type="text" id="file_name" name="file_name">
+        </div>
+             
+        <div>
+            <label id = "directory">Directory</label>
+        </div>
         <div class="file-container">
-            <label for="private-key-dir">Store private key:</label>
             <button class="action-btn round-btn" id="select-dir-btn" onclick="selectDirectory()">Select directory</button>
         </div>
         <button class="action-btn round-btn" id="confirm-btn">Confirm</button>
-        <button class="directory-btn round-btn" id="directory-btn">Directory</button>
     </div>
     <script src="/eel.js"></script>
     <script src="register.js"></script>
 </body>
 </html>
+
