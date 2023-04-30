@@ -180,6 +180,7 @@ def generate_transaction(sender_priv_key_filename, sender_pub_key_filename, data
 
 
     
-
+def main():
+    
 
 

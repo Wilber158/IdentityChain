@@ -1,4 +1,3 @@
-from blocks import Block
 import time
 import json
 from blockchain import BlockChain
@@ -12,10 +11,10 @@ import threading
 import eel
 import tkinter as tk
 from tkinter import filedialog
-import faker
 import datetime
 import os
-import base64
+from tkinter import filedialog
+
 
 
 
@@ -42,6 +41,13 @@ class P2PNetwork:
         for node in self.nodes:
             node.receive_block(block, blockchain_size)
 
+def save_network(network, filename='network.pickle'):
+    with open(filename, 'wb') as handle:
+        pickle.dump(network, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+def load_network(filename='network.pickle'):
+    with open(filename, 'rb') as handle:
+        return pickle.load(handle)
 
 
 
@@ -63,6 +69,34 @@ class FullNode:
             self.mempool.append(transaction)
         else:
             print("Invalid transaction signature")
+
+    def broadcast_block(self, block):
+        for peer in self.peers:
+            if isinstance(peer, FullNode):
+                peer.receive_block(block)
+
+    def receive_block(self, block, blockchain_size):
+        if blockchain_size > self.blockchain.blockchain_size:
+            if self.blockchain.is_next_block(block):
+                self.blockchain.add_block(block)
+                self.broadcast_block(block)
+            else:
+                self.sync_blockchain()
+
+    def sync_blockchain(self):
+        longest_blockchain = None
+        max_length = 0
+
+        for peer in self.peers:
+            if isinstance(peer, FullNode):
+                blockchain = peer.send_blockchain()
+
+                if blockchain.validate() and len(blockchain.blocks) > max_length:
+                    max_length = len(blockchain.blocks)
+                    longest_blockchain = blockchain
+
+        if longest_blockchain:
+            self.blockchain = longest_blockchain
 
     def mine_block(self):
         if len(self.mempool) == 0:
@@ -119,9 +153,10 @@ def load_blockchain(filename='blockchain.pickle'):
 
 class UserNode(LightNode):
     def __init__(self, priv_key, pub_key):
+        super().__init__(priv_key, pub_key)
         self.privkey_file = priv_key
         self.pubkey_file = pub_key
-        pass
+
 
 
 def serialize_person_data(person_data):
@@ -208,10 +243,29 @@ def select_directory():
 
     return selected_directory_str
 
+@eel.expose
+def select_file_directory():
+    # Create a Tkinter root window
+    root = tk.Tk()
+
+    # Hide the root window to avoid it displaying during the file selection process
+    root.withdraw()
+
+    # Open a file selection dialog and get the selected file path
+    selected_file = filedialog.askopenfilename()
+
+    # Show the selected file path
+    print("Selected file:", selected_file)
+
+    # Return the selected file path
+    return selected_file
+
+
 
 network = P2PNetwork()
 
 def main():
+    global network
     print("Happening")
     num_full_nodes = 5
     num_light_nodes = 10
@@ -221,6 +275,12 @@ def main():
     # Create the folder if it doesn't exist
     if not os.path.exists(key_folder):
         os.makedirs(key_folder)
+
+     # Load the existing network if it exists
+    try:
+        network = load_network()
+    except FileNotFoundError:
+        network = P2PNetwork()
 
     # Creating and adding nodes to the network
     for i in range(num_full_nodes):
@@ -247,6 +307,11 @@ def main():
     simulation_thread = threading.Thread(target=simulate, args=(network, key_folder, new_nodes_queue))
     simulation_thread.daemon = True  # Set the thread as a daemon to terminate with the main program
     simulation_thread.start()
+        
+    # Save the network after setting up the simulation
+
+    save_network(network)
+
 
     while True:
         time.sleep(20)  # Add a new user node every 5 seconds (for demonstration purposes)
@@ -277,9 +342,49 @@ def create_user_node(seed, file_name, file_dir):
     print(pub_dir)
     print(f"{seed} type: {type(seed)}")
     keys.generate_ecc_private_key(seed, priv_dir)
-    keys.generate_user_key(priv_dir, pub_dir, file_dir)
+    keys.generate_public_key(priv_dir, pub_dir)
     node = UserNode(priv_dir, pub_dir)
     network.add_node(node)
+
+@eel.expose
+def user_transaction(sender_privkey_file, sender_pubkey_file, receiver_pubkey_file, person_data_json, share_with_self):
+    user_node = next((node for node in network.userNodes if node.privkey_file == sender_privkey_file and node.pubkey_file == sender_pubkey_file), None)
+
+    if user_node:
+        if share_with_self:
+            receiver_pubkey_file = sender_pubkey_file
+
+        transaction = user_node.create_transaction(receiver_pubkey_file, person_data_json)
+        user_node.send_transaction(transaction, network)
+        return "Transaction sent successfully."
+    else:
+        return "User node not found."
+    
+@eel.expose
+def get_user_transactions_eel(user_pubkey_file):
+    return get_user_transactions(user_pubkey_file)
+
+def get_user_transactions(user_pubkey_file):
+    user_transactions = []
+
+    # Find a full node to access the blockchain
+    full_node = next((node for node in network.nodes if isinstance(node, FullNode)), None)
+
+    if full_node:
+        for block in full_node.blockchain.blocks:
+            for transaction in block.transactions:
+                if transaction.sender_public_key == user_pubkey_file or transaction.receiver_public_key == user_pubkey_file:
+                    user_transactions.append(transaction)
+
+        # Return a serialized list of user transactions
+        return [transaction.__dict__ for transaction in user_transactions]
+
+    else:
+        return []
+
+
+
+
 
 
 
