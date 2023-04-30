@@ -14,7 +14,7 @@ import keys
 import pickle
 import queue
 import threading
-
+import eel
 
 
 
@@ -141,6 +141,27 @@ def simulate(network, key_folder, new_nodes_queue):
 
             # Save the blockchain
             save_blockchain(full_node.blockchain)
+    
+    
+
+@eel.expose
+def get_blockchain_data(network):
+    blockchain_data = []
+
+    for node in network.nodes:
+        if isinstance(node, FullNode):
+            for block in node.blockchain.blocks:
+                block_data = {
+                    "block_number": block.block_number,
+                    "transactions": block.transactions,
+                    "timestamp": block.timestamp,
+                    "previous_hash": block.previous_hash,
+                    "hash": block.hash
+                }
+                blockchain_data.append(block_data)
+
+    return blockchain_data
+
 
 def main():
     network = P2PNetwork()
@@ -185,15 +206,15 @@ def main():
         user_node = add_user_node(network, key_id, key_folder)
         new_nodes_queue.put(user_node)
 
-    # Print blockchain for all full nodes
-    for i, node in enumerate([n for n in network.nodes if isinstance(n, FullNode)]):
-        print(f"Blockchain for FullNode{i + 1}:")
-        for block in node.blockchain.blocks:
-            print(f"  Block {block.block_number}:")
-            print(f"Transactions {block.transactions}")
-            for i in block.transactions:
-                print(f"Sender: {i.sender_public_key} \n Receiver: {i.receiver_public_key} \n transaction data: encrypted")
-            print(f"Timestamp: {block.timestamp} \n previous_hash: {block.previous_hash} \n hash: {block.hash}")
+        # Print blockchain for all full nodes
+        for i, node in enumerate([n for n in network.nodes if isinstance(n, FullNode)]):
+            print(f"Blockchain for FullNode{i + 1}:")
+            for block in node.blockchain.blocks:
+                print(f"  Block {block.block_number}:")
+                print(f"Transactions {block.transactions}")
+                for i in block.transactions:
+                    print(f"Sender: {i.sender_public_key} \n Receiver: {i.receiver_public_key} \n transaction data: encrypted")
+                print(f"Timestamp: {block.timestamp} \n previous_hash: {block.previous_hash} \n hash: {block.hash}")
 
 if __name__ == "__main__":
     main()
