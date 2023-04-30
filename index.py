@@ -1,10 +1,5 @@
 from blocks import Block
 import time
-from Crypto.PublicKey import RSA
-from Crypto.Signature import PKCS1_PSS
-from Crypto.Hash import SHA256
-from Crypto.Protocol.KDF import scrypt
-from Crypto.Random import get_random_bytes
 import json
 from blockchain import BlockChain
 from person import get_random_people
@@ -20,6 +15,7 @@ from tkinter import filedialog
 import faker
 import datetime
 import os
+import base64
 
 
 
@@ -152,7 +148,7 @@ def simulate(network, key_folder, new_nodes_queue):
 
         num_transactions = random.randint(1, 5)  # Random number of transactions per iteration
         for _ in range(num_transactions):
-            time.sleep(30)  # Sleep for 1 second between transactions
+            time.sleep(10)  # Sleep for 1 second between transactions
 
             light_node = random.choice(network.lightnodes)
             receiver_node = random.choice([n for n in network.lightnodes if n != light_node])
@@ -275,12 +271,12 @@ def main():
 
 @eel.expose
 def create_user_node(seed, file_name, file_dir):
-    priv_dir = f"{file_dir}/{file_name}.pem"
-    pub_dir = f"{file_dir}/{file_name}_pub.pem"
+    priv_dir = os.path.join(file_dir, f"{file_name}.pem")
+    pub_dir = os.path.join(file_dir, f"{file_name}_pub.pem")
     print(priv_dir)
     print(pub_dir)
     print(f"{seed} type: {type(seed)}")
-    keys.generate_Mnemonic_private_key(seed, priv_dir)
+    keys.generate_ecc_private_key(seed, priv_dir)
     keys.generate_user_key(priv_dir, pub_dir, file_dir)
     node = UserNode(priv_dir, pub_dir)
     network.add_node(node)

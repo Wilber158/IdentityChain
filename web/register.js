@@ -34,9 +34,12 @@ document.getElementById("confirm-btn").addEventListener("click", async () => {
         console.log(directory);
         await eel.create_user_node(mnemonic_seed, file_name, directory)();
         show_alert("File saved successfully");
+        
     } else {
         show_alert("Please select a directory and enter a file name");
     }
+
+    window.location.href = "main.html"
 });
 
 init();
