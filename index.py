@@ -32,6 +32,11 @@ class P2PNetwork:
             self.lightnodes.append(node)
         elif isinstance(node, UserNode):
             self.userNodes.append(node)
+    
+    def add_user_node(self, node):
+        print(f"adding {node}")
+        self.userNodes.append(node)
+        print("added")
 
     def broadcast_transaction(self, transaction):
         for node in self.nodes:
@@ -44,6 +49,7 @@ class P2PNetwork:
 def save_network(network, filename='network.pickle'):
     with open(filename, 'wb') as handle:
         pickle.dump(network, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    print("Network saved")
 
 def load_network(filename='network.pickle'):
     with open(filename, 'rb') as handle:
@@ -153,7 +159,6 @@ def load_blockchain(filename='blockchain.pickle'):
 
 class UserNode(LightNode):
     def __init__(self, priv_key, pub_key):
-        super().__init__(priv_key, pub_key)
         self.privkey_file = priv_key
         self.pubkey_file = pub_key
 
@@ -183,7 +188,7 @@ def simulate(network, key_folder, new_nodes_queue):
 
         num_transactions = random.randint(1, 5)  # Random number of transactions per iteration
         for _ in range(num_transactions):
-            time.sleep(10)  # Sleep for 1 second between transactions
+            time.sleep(40)  # Sleep for 1 second between transactions
 
             light_node = random.choice(network.lightnodes)
             receiver_node = random.choice([n for n in network.lightnodes if n != light_node])
@@ -338,16 +343,24 @@ def main():
 def create_user_node(seed, file_name, file_dir):
     priv_dir = os.path.join(file_dir, f"{file_name}.pem")
     pub_dir = os.path.join(file_dir, f"{file_name}_pub.pem")
-    print(priv_dir)
+    print(f" Private key: {priv_dir}")
     print(pub_dir)
     print(f"{seed} type: {type(seed)}")
     keys.generate_ecc_private_key(seed, priv_dir)
     keys.generate_public_key(priv_dir, pub_dir)
     node = UserNode(priv_dir, pub_dir)
-    network.add_node(node)
+    network.add_user_node(node)
+    print("Added to network")
+    save_network(network)
+    print(f"{network.userNodes}")
 
 @eel.expose
 def user_transaction(sender_privkey_file, sender_pubkey_file, receiver_pubkey_file, person_data_json, share_with_self):
+    print(f"From GUI: {sender_privkey_file} {sender_pubkey_file}")
+    print(f"Size: {len(network.userNodes)}")
+    for user in network.userNodes:
+        print(f"User Priv: {user.privkey_file} \n User_Pub:  {user.pubkey_file}")
+    
     user_node = next((node for node in network.userNodes if node.privkey_file == sender_privkey_file and node.pubkey_file == sender_pubkey_file), None)
 
     if user_node:
