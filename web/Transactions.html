@@ -22,14 +22,32 @@
     <div class="container">
         <h1>Retrieve Your Private Key</h1>
         <div class="Transactions">
-            <label for="Public">Mnemonic:</label>
-            <input type="text" id="Public" name="Public">
+            <label for="transacation">Mnemonic:</label>
+            <input type="text" id="transacation" name="transacation">
             <button onclick="blockchain.py">FIND</button>
         </div>
         
     </div>
     <script>
         const DataButton = document.querySelector('button');
+
+        function processInput() {
+            // Get the input element from the form
+            const inputElement = document.getElementById('transacation');
+  
+            // Get the input value
+            const inputValue = inputElement.value;
+  
+            // Split the input value into words
+            const words = inputValue.split(' ');
+  
+            // Loop through the words and perform some action on each word
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i];
+                // Do something with the word
+                console.log(word);
+            }
+    }
     </script>
 </body>
 </html>
