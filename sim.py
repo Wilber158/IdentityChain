@@ -108,15 +108,21 @@ def main():
     # Randomly pick a light node to transact and a full node to mine
     people = get_random_people()
     for _ in range(num_transactions):
-        light_node = network.lightnodes[random.randint(0, num_light_nodes)]
+        num_light_nodes = len(network.lightnodes)
+        light_node = network.lightnodes[random.randint(0, num_light_nodes - 1)]
+
+        num_light_nodes = len(network.lightnodes) - 1
         receiver_node = network.lightnodes[random.randint(0, num_light_nodes)]
+
         person_data = random.choice(people)
         person_data_json = json.dumps(person_data.__dict__)
 
         transaction = light_node.create_transaction(receiver_node.pubkey_file, person_data_json)
         light_node.send_transaction(transaction, network)
 
+        num_full_nodes = len(network.nodes) - 1
         full_node = network.nodes[random.randint(0, num_full_nodes)]
+
         full_node.mine_block()
         new_block = full_node.blockchain.blocks[-1]
         network.broadcast_block(new_block)
