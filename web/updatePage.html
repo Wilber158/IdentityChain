@@ -2,17 +2,19 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Update Your Information in The Chain</title>
+    <title>Store Your Information in The Chain</title>
     <link rel="stylesheet" href="update.css">
+    <script src = "store.js"></script>
+    <script src="/eel.js"></script>
 </head>
 <body>
     <button id="back-btn">Back</button>
     <div class="main">
         <div>
-            <h1> Update </h1>
+            <h1> Store </h1>
         </div>
         <div class="UserInput">
-            <form>
+            <form id="inputs">
                 <div class="form-group">
                     <label for="Name">Name:</label>
                     <input type="text" id="Name" name="Name">
@@ -37,34 +39,20 @@
             </form>
         </div>
 
-        <div class="PublicKey">
+        <div class="UserInput">
             <form>
                 <div class="form-group">
                     <label for="PublicKey">Public Key:</label>
-                    <input type="text" id="PublicKey" name="PublicKey">
+                    <button id ="pb-button">Directory</button>
+                    <label id = "pb-dir"></label>
+                    <label for="privateKey">Private Key:</label>
+                    <button id ="pvt-button">Directory</button>
+                    <label id="pv-dir"></label>
                 </div>
             </form>
         </div>
 
-        <button type="submit" class="btn">Submit</button>
-        <button class="btn" >Private Key</button>
+        <button type="submit" class="btn">Store</button>
     </div>
-    <script>
-        document.getElementById("back-btn").addEventListener("click", function() {
-            // Add your register button functionality here
-            window.location.href = "main.html";
-        });
-
-        const forms = document.querySelectorAll('form');
-        const submitButton = document.querySelector('button[type="submit"]');
-
-        submitButton.addEventListener('click', (event) => {
-            event.preventDefault();
-
-            forms.forEach(form => {
-                form.submit();
-            });
-        });
-    </script>
 </body>
 </html>

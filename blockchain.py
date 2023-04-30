@@ -35,6 +35,17 @@ class BlockChain:
         #incrementing the number of blocks in the chain
         self.blockchain_size += 1
 
+    def is_next_block(self, block):
+        last_block = self.blocks[-1]
+        if block.block_number != last_block.block_number + 1:
+            return False
+        if block.previous_hash != last_block.hash:
+            return False
+        if block.hash != block.calculate_hash():
+            return False
+        return True
+
+
     def is_chain_valid(self):
         for i in range(1, len(self.blocks)):
             current_block = self.blocks[i]
