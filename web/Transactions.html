@@ -18,7 +18,7 @@
     </style>
 </head>
 <body>
-    
+    <button id="back-btn">Back</button>
     <div class="container">
         <h1>Retrieve Your Private Key</h1>
         <div class="Transactions">
@@ -29,6 +29,10 @@
         
     </div>
     <script>
+        document.getElementById("back-btn").addEventListener("click", function() {
+            // Add your register button functionality here
+            window.location.href = "main.html";
+        });
         const DataButton = document.querySelector('button');
 
         function processInput() {

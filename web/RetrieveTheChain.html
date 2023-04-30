@@ -18,7 +18,7 @@
     </style>
 </head>
 <body>
-    
+    <button id="back-btn">Back</button>
     <div class="container">
         <h1>Retrieve the CHAIN</h1>
         <div class="Data">
@@ -28,6 +28,11 @@
     </div>
     <script>
         const DataButton = document.querySelector('button');
+
+        document.getElementById("back-btn").addEventListener("click", function() {
+            // Add your register button functionality here
+            window.location.href = "main.html";
+        });
     </script>
 </body>
 </html>
