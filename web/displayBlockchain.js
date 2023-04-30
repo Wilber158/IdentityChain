@@ -7,7 +7,7 @@ async function displayBlockchainData() {
 
     for (const blockData of blockchainData) {
         const blockDiv = document.createElement("div");
-
+        console.log("data", blockData);
         blockDiv.innerHTML = `
             <h4>Block ${blockData.block_number}</h4>
             <p>Transactions: ${blockData.transactions}</p>
@@ -22,3 +22,6 @@ async function displayBlockchainData() {
 
 // Call the function to display the blockchain data
 displayBlockchainData();
+
+// Set an interval to update the blockchain data every 5 seconds
+setInterval(displayBlockchainData, 5000);
