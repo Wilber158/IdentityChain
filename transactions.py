@@ -9,4 +9,6 @@ class Transactions:
     
     def verify_signature(self):
         return keys.verification_function(self.sender_public_key, self.signature, self.transaction_data)
-            
+    
+    def __str__(self):
+        return f"Transactions(sender_public_key={self.sender_public_key}, receiver_public_key={self.receiver_public_key}, signature={self.signature}, data={self.data})"

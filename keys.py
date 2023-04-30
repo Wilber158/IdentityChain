@@ -8,38 +8,50 @@ from mnemonic import Mnemonic
 from transactions import Transactions
 import json
 from Crypto.Protocol.KDF import scrypt
+import eel
+import hashlib
+import binascii
+
 
 
 #generate secret phrases
+@eel.expose
 def generateMnemonicPhrase():
     mnemo = Mnemonic(language="english")
     words = mnemo.generate(strength=128)
     mnemonic_seed = mnemo.to_seed(words, passphrase="")
-    return words
+    result = {"words": words, "seed": mnemonic_seed.hex()}  # Convert the seed to a hexadecimal string
+    return json.dumps(result)
 
 
-def generate_Mnemonic_private_key(mnemo_seed, filename, N=2**14, r=8, p=1):
-    salt = get_random_bytes(16)
-    key_material = scrypt(mnemo_seed, salt, 32, N, r, p)
-    key_int = int.from_bytes(key_material, byteorder='big')
-    key = RSA.construct((key_int,))
+def generate_Mnemonic_private_key(s, priv_dir):
+    seed = binascii.unhexlify(s)
+    private_key = RSA.generate(2048, randfunc=lambda x: seed)
 
-    with open(filename, 'wt') as f:
-        f.write(key.export_key(format='PEM').decode())
+    with open(priv_dir, 'wb') as f:
+        f.write(private_key.export_key(format='PEM'))
+    print("stored")
 
 
 def generate_private_key(filename):
     key = RSA.generate(2048)
-    with open(filename, 'wt') as f:
+    with open(filename, 'wb') as f:
         f.write(key.export_key(format='PEM').decode())
 
 
 def generate_public_key(priv_dir, pub_dir):
     with open(priv_dir, 'rt') as f:
         key = RSA.import_key(f.read())
-    
     with open(pub_dir, 'wt') as f:
         f.write(key.public_key().export_key(format='PEM').decode())
+    
+def generate_user_key(priv_dir, pub_dir, file_dir):
+    with open(f"{file_dir}/{priv_dir}", 'rt') as f:
+        key = RSA.import_key(f.read())
+
+    with open(f"{file_dir}/{pub_dir}", 'wt') as f:
+        f.write(key.public_key().export_key(format='PEM').decode())
+
 
 def generate_signiture(priv_dir, transaction):
     with open(priv_dir, 'rt') as f:
