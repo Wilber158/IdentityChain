@@ -3,11 +3,17 @@ import time
 from hash import hashData
 from blocks import Block
 
+class Transactions:
+    def __init__(self, sender, receiver, transaction, signature):
+        self.sender_public_key = sender
+        self.receiver_public_key = receiver#none if first transaction
+        self.signature = signature
+        self.transaction_data = transaction #only this field is encrypted
 
 class BlockChain:
     def __init__(self):
         #creates genesis block, while initializing default variables
-        self.genesis = Block(0, ["genesis"], None, time.time(), 0)
+        self.genesis = Block(0, [Transactions(None, None, None, None)], None, time.time(), 0)
         self.blocks = [self.genesis]
         self.blockchain_size = 1
         self.difficulty = 3

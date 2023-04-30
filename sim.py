@@ -11,6 +11,10 @@ from person import get_random_people
 import random
 import os
 import keys
+import pickle
+import queue
+import threading
+
 
 
 
@@ -60,8 +64,13 @@ class FullNode:
             print("No transactions in mempool")
             return
 
-        self.blockchain.addBlock(self.mempool)
-        self.mempool.clear()
+        # Select at most 2 transactions from the mempool
+        transactions_to_mine = self.mempool[:2]
+
+        self.blockchain.addBlock(transactions_to_mine)
+
+        # Remove the mined transactions from the mempool
+        self.mempool = self.mempool[2:]
 
     def receive_block(self, block):
         if self.blockchain.is_chain_valid():
@@ -85,6 +94,54 @@ class LightNode:
             if isinstance(node, FullNode):
                 node.receive_transaction(transaction)
 
+
+def save_blockchain(blockchain, filename='blockchain.pickle'):
+    with open(filename, 'wb') as handle:
+        pickle.dump(blockchain, handle, protocol=pickle.HIGHEST_PROTOCOL)
+
+def load_blockchain(filename='blockchain.pickle'):
+    with open(filename, 'rb') as handle:
+        return pickle.load(handle)
+
+class UserNode(LightNode):
+    pass
+
+def add_user_node(network, key_id, key_folder):
+    user_node = UserNode(key_id, key_folder)
+    network.add_node(user_node)
+    return user_node
+
+def simulate(network, key_folder, new_nodes_queue):
+    people = get_random_people()
+
+    while True:
+        # Check for new nodes in the queue
+        while not new_nodes_queue.empty():
+            new_node = new_nodes_queue.get()
+            network.add_node(new_node)
+
+        num_transactions = random.randint(1, 5)  # Random number of transactions per iteration
+        for _ in range(num_transactions):
+            time.sleep(1)  # Sleep for 1 second between transactions
+
+            light_node = random.choice(network.lightnodes)
+            receiver_node = random.choice([n for n in network.lightnodes if n != light_node])
+
+            person_data = random.choice(people)
+            person_data_json = json.dumps(person_data.__dict__)
+
+            transaction = light_node.create_transaction(receiver_node.pubkey_file, person_data_json)
+            light_node.send_transaction(transaction, network)
+
+            full_node = random.choice([n for n in network.nodes if isinstance(n, FullNode)])
+
+            full_node.mine_block()
+            new_block = full_node.blockchain.blocks[-1]
+            network.broadcast_block(new_block)
+
+            # Save the blockchain
+            save_blockchain(full_node.blockchain)
+
 def main():
     network = P2PNetwork()
     num_full_nodes = 5
@@ -105,33 +162,38 @@ def main():
         light_node = LightNode(i, key_folder)
         network.add_node(light_node)
 
-    # Randomly pick a light node to transact and a full node to mine
-    people = get_random_people()
-    for _ in range(num_transactions):
-        num_light_nodes = len(network.lightnodes)
-        light_node = network.lightnodes[random.randint(0, num_light_nodes - 1)]
+    # Load the existing blockchain if it exists
+    try:
+        blockchain = load_blockchain()
+        for node in network.nodes:
+            if isinstance(node, FullNode):
+                node.blockchain = blockchain
+    except FileNotFoundError:
+        pass
 
-        num_light_nodes = len(network.lightnodes) - 1
-        receiver_node = network.lightnodes[random.randint(0, num_light_nodes)]
 
-        person_data = random.choice(people)
-        person_data_json = json.dumps(person_data.__dict__)
+    new_nodes_queue = queue.Queue()
 
-        transaction = light_node.create_transaction(receiver_node.pubkey_file, person_data_json)
-        light_node.send_transaction(transaction, network)
+    # Start the simulation in a separate thread
+    simulation_thread = threading.Thread(target=simulate, args=(network, key_folder, new_nodes_queue))
+    simulation_thread.daemon = True  # Set the thread as a daemon to terminate with the main program
+    simulation_thread.start()
 
-        num_full_nodes = len(network.nodes) - 1
-        full_node = network.nodes[random.randint(0, num_full_nodes)]
-
-        full_node.mine_block()
-        new_block = full_node.blockchain.blocks[-1]
-        network.broadcast_block(new_block)
+    while True:
+        time.sleep(5)  # Add a new user node every 5 seconds (for demonstration purposes)
+        key_id = len(network.lightnodes)
+        user_node = add_user_node(network, key_id, key_folder)
+        new_nodes_queue.put(user_node)
 
     # Print blockchain for all full nodes
     for i, node in enumerate([n for n in network.nodes if isinstance(n, FullNode)]):
         print(f"Blockchain for FullNode{i + 1}:")
         for block in node.blockchain.blocks:
-            print(f"  Block {block.block_number}: {block.hash}")
+            print(f"  Block {block.block_number}:")
+            print(f"Transactions {block.transactions}")
+            for i in block.transactions:
+                print(f"Sender: {i.sender_public_key} \n Receiver: {i.receiver_public_key} \n transaction data: encrypted")
+            print(f"Timestamp: {block.timestamp} \n previous_hash: {block.previous_hash} \n hash: {block.hash}")
 
 if __name__ == "__main__":
     main()
