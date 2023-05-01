@@ -399,8 +399,12 @@ def user_share_transaction(sender_privkey_file, sender_pubkey_file, receiver_pub
 def get_user_transactions_eel(user_pubkey_file):
     return get_user_transactions(user_pubkey_file)
 
-def get_user_transactions(user_pubkey_file):
+def get_user_transactions(user_pubkey_file, user_privkey_file):
     user_transactions = []
+
+    # Load user's private key
+    with open(user_privkey_file, 'rb') as f:
+        user_priv_key_pem = f.read()
 
     # Find a full node to access the blockchain
     full_node = next((node for node in network.nodes if isinstance(node, FullNode)), None)
@@ -409,6 +413,8 @@ def get_user_transactions(user_pubkey_file):
         for block in full_node.blockchain.blocks:
             for transaction in block.transactions:
                 if transaction.sender_public_key == user_pubkey_file or transaction.receiver_public_key == user_pubkey_file:
+                    decrypted_data = decrypt_transaction(transaction.sender_public_key, user_priv_key_pem, transaction.transaction_data)
+                    transaction.transaction_data = json.loads(decrypted_data)  # Parse the decrypted data as JSON
                     user_transactions.append(transaction)
 
         # Return a serialized list of user transactions
@@ -416,6 +422,7 @@ def get_user_transactions(user_pubkey_file):
 
     else:
         return []
+
 
 
 

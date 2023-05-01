@@ -3,30 +3,79 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retrieve Transactions</title>
-    <link rel="stylesheet" href="retrieveTrans.css">
+    <title>Get The Chain</title>
+    <link rel="stylesheet" href="main.css">
     <script type="text/javascript" src="/eel.js"></script>
+    <script src="retrieveTrans.js"></script>
     <style>
-        
+        h1 {
+            text-align: center;
+            padding-bottom: 60px;
+        }
+        .data {
+            background-color: blue;
+            border-radius: 10px;
+        }
+        .blockchain-container {
+            width: 100%;
+            height: 400px; /* adjust the height as needed */
+            overflow-y: scroll;
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
-    <div>
-        <button id="back-btn">Back</button>
-    </div>
+    <button id="back-btn">Back</button>
     <div class="container">
-        <h1>Transactions</h1>
-        <div class="key">
-            <label for="public">Your Public Key:</label>
-            <input type="text" id="public" name="public">
-            <button id="btn" onclick="">UNLEASH</button>
+        <h1>Retrieve the CHAIN</h1>
+        <div class="blockchain-container">
+            <div class="data">
+                <!-- Blockchain data will be inserted here -->
+            </div>
         </div>
-        <div class="private-key">
-            <label for="private">Your Private Key:</label>
-            <input type="text" id="private" name="private">
-            <button id="btn2" onclick="">UNLEASH</button>
+        <div class="dirs">
+            <label for="PublicKey">Public Key:</label>
+            <button id="pubKey-button">Directory</button>
+            <label id="pubKey-dir"></label>
+            <label for="privateKey">Private Key:</label>
+            <button id="privKey-button">Directory</button>
+            <label id="privKey-dir"></label>
         </div>
+        <button id="retrieve-btn">Retrieve Transactions</button>
     </div>
-    <script src="retrieveTrans.js"></script>
+    <script>
+        document.getElementById("back-btn").addEventListener("click", function() {
+            // Add your register button functionality here
+            window.location.href = "main.html";
+        });
+
+        document.getElementById("pubKey-button").addEventListener("click", async function() {
+            let pubKeyPath = await eel.select_file()();
+            document.getElementById("pubKey-dir").innerHTML = pubKeyPath;
+        });
+
+        document.getElementById("privKey-button").addEventListener("click", async function() {
+            let privKeyPath = await eel.select_file_directory()();
+            document.getElementById("privKey-dir").innerHTML = privKeyPath;
+        });
+
+        document.getElementById("retrieve-btn").addEventListener("click", async function() {
+            let pubKeyPath = document.getElementById("pubKey-dir").innerHTML;
+            let privKeyPath = document.getElementById("privKey-dir").innerHTML;
+            let transactions = await eel.get_user_transactions(pubKeyPath, privKeyPath)();
+
+            let dataDiv = document.querySelector(".data");
+            dataDiv.innerHTML = "";
+
+            transactions.forEach(transaction => {
+                let transactionDiv = document.createElement("div");
+                transactionDiv.innerHTML = JSON.stringify(transaction, null, 2);
+                dataDiv.appendChild(transactionDiv);
+            });
+        });
+    </script>
 </body>
 </html>

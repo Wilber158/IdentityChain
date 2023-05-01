@@ -6,6 +6,7 @@
     <title>Get The Chain</title>
     <link rel="stylesheet" href="main.css">
     <script type="text/javascript" src="/eel.js"></script>
+    <script src = "displayBlockchain.js"></script>
     <style>
         h1{
             text-align: center;
@@ -15,43 +16,42 @@
             background-color: blue;
             border-radius: 10px;
         }
+        .blockchain-container {
+            width: 100%;
+            height: 400px; /* adjust the height as needed */
+            overflow-y: scroll;
+            background-color: white;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
     <button id="back-btn">Back</button>
     <div class="container">
-        <h1>Retrieve Your Private Key</h1>
-        <div class="Transactions">
-            <label for="transaction">Mnemonic:</label>
-            <input type="text" id="transacation" name="transaction">
-            <button onclick="blockchain.py">FIND</button>
+        <h1>Retrieve the CHAIN</h1>
+        <div class="blockchain-container">
+            <div class="data">
+                <!-- Blockchain data will be inserted here -->
+            </div>
         </div>
-        
+        <div class = "dirs">
+                <label for="PublicKey">Public Key:</label>
+                <button id ="pb-button">Directory</button>
+                <label id = "pb-dir"></label>
+                <label for="privateKey">Private Key:</label>
+                <button id ="pvt-button">Directory</button>
+                <label id="pv-dir"></label>
+        </div>
     </div>
     <script>
+        const DataButton = document.querySelector('button');
+
         document.getElementById("back-btn").addEventListener("click", function() {
             // Add your register button functionality here
             window.location.href = "main.html";
         });
-        const DataButton = document.querySelector('button');
-
-        function processInput() {
-            // Get the input element from the form
-            const inputElement = document.getElementById('transaction');
-  
-            // Get the input value
-            const inputValue = inputElement.value;
-  
-            // Split the input value into words
-            const words = inputValue.split(' ');
-  
-            // Loop through the words and perform some action on each word
-            for (let i = 0; i < words.length; i++) {
-                const word = words[i];
-                // Do something with the word
-                console.log(word);
-            }
-    }
     </script>
 </body>
 </html>
