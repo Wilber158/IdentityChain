@@ -188,7 +188,7 @@ def simulate(network, key_folder, new_nodes_queue):
 
         num_transactions = random.randint(1, 5)  # Random number of transactions per iteration
         for _ in range(num_transactions):
-            time.sleep(40)  # Sleep for 1 second between transactions
+            time.sleep(15)  # Sleep for 1 second between transactions
 
             light_node = random.choice(network.lightnodes)
             receiver_node = random.choice([n for n in network.lightnodes if n != light_node])

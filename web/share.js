@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", function() {
     }
   
     // Share data button functionality
-    document.getElementById("submit").addEventListener("click", async function(event) {
+    document.getElementById("submit").addEventListener("click", async function(){
       event.preventDefault();
       const user = getUserInput();
       if (user) {
@@ -39,8 +39,15 @@ document.addEventListener("DOMContentLoaded", function() {
         const private_dir = document.getElementById("pv-dir").innerHTML;
         const receiver_public_key = document.getElementById("pv-dir").innerHTML;
         const result = await eel.user_share_transaction(private_dir, public_dir, receiver_public_key, JSON.stringify(user))();
-      }
-    });
+        if (result === "Transaction sent successfully.") {
+          alert(result);
+        } else {
+            alert("Error: " + result);
+        }
+        } else {
+        alert("Please fill in all the fields and select the directories");
+        }
+      });
   
     // Directory buttons functionality
     document.getElementById("pb-button").addEventListener("click", async function(){
