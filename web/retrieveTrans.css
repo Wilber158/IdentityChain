@@ -10,7 +10,21 @@
     padding: 20px;
     flex-direction: row;
 }
+.private-key{
+    display: flex;
+    justify-content: center;
+    flex-direction: row;
+}
 #btn{
+    background-color: #5c6bc0;
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    text-align: center;
+}
+#btn2{
     background-color: #5c6bc0;
     color: #fff;
     border: none;
