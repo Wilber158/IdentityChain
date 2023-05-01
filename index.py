@@ -372,6 +372,22 @@ def user_transaction(sender_privkey_file, sender_pubkey_file, receiver_pubkey_fi
         return "Transaction sent successfully."
     else:
         return "User node not found."
+
+@eel.expose
+def user_share_transaction(sender_privkey_file, sender_pubkey_file, receiver_pubkey_file, person_data_json):
+    print(f"From GUI: {sender_privkey_file} {sender_pubkey_file}")
+    print(f"Size: {len(network.userNodes)}")
+    for user in network.userNodes:
+        print(f"User Priv: {user.privkey_file} \n User_Pub:  {user.pubkey_file}")
+    
+    user_node = next((node for node in network.userNodes if node.privkey_file == sender_privkey_file and node.pubkey_file == sender_pubkey_file), None)
+    receiver_node = next((node for node in network.userNodes if node.pubkey_file == receiver_pubkey_file), None)
+    if user_node and receiver_node:
+        transaction = user_node.create_transaction(receiver_pubkey_file, person_data_json)
+        user_node.send_transaction(transaction, network)
+        return "Transaction sent successfully."
+    else:
+        return "User node not found."
     
 @eel.expose
 def get_user_transactions_eel(user_pubkey_file):
