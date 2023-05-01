@@ -37,7 +37,7 @@ document.addEventListener("DOMContentLoaded", function() {
       if (user) {
         const public_dir = document.getElementById("pb-dir").innerHTML;
         const private_dir = document.getElementById("pv-dir").innerHTML;
-        const receiver_public_key = document.getElementById("pv-dir").innerHTML;
+        const receiver_public_key = document.getElementById("rc-dir").innerHTML;
         const result = await eel.user_share_transaction(private_dir, public_dir, receiver_public_key, JSON.stringify(user))();
         if (result === "Transaction sent successfully.") {
           alert(result);

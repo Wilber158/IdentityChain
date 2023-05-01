@@ -188,7 +188,7 @@ def simulate(network, key_folder, new_nodes_queue):
 
         num_transactions = random.randint(1, 5)  # Random number of transactions per iteration
         for _ in range(num_transactions):
-            time.sleep(15)  # Sleep for 1 second between transactions
+            time.sleep(30)  # Sleep for 1 second between transactions
 
             light_node = random.choice(network.lightnodes)
             receiver_node = random.choice([n for n in network.lightnodes if n != light_node])
@@ -375,19 +375,25 @@ def user_transaction(sender_privkey_file, sender_pubkey_file, receiver_pubkey_fi
 
 @eel.expose
 def user_share_transaction(sender_privkey_file, sender_pubkey_file, receiver_pubkey_file, person_data_json):
-    print(f"From GUI: {sender_privkey_file} {sender_pubkey_file}")
+    print(f"From GUI: {sender_privkey_file} {sender_pubkey_file} \n Receiver:{receiver_pubkey_file}")
     print(f"Size: {len(network.userNodes)}")
     for user in network.userNodes:
         print(f"User Priv: {user.privkey_file} \n User_Pub:  {user.pubkey_file}")
-    
-    user_node = next((node for node in network.userNodes if node.privkey_file == sender_privkey_file and node.pubkey_file == sender_pubkey_file), None)
+
+    user_node = next((node for node in network.userNodes if node.privkey_file.replace("\\", "/") == sender_privkey_file.replace("\\", "/") and node.pubkey_file.replace("\\", "/") == sender_pubkey_file.replace("\\", "/")), None)
     receiver_node = next((node for node in network.userNodes if node.pubkey_file == receiver_pubkey_file), None)
+    
     if user_node and receiver_node:
         transaction = user_node.create_transaction(receiver_pubkey_file, person_data_json)
         user_node.send_transaction(transaction, network)
         return "Transaction sent successfully."
     else:
         return "User node not found."
+
+
+
+
+
     
 @eel.expose
 def get_user_transactions_eel(user_pubkey_file):
