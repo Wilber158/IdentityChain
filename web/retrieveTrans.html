@@ -6,7 +6,6 @@
     <title>Get The Chain</title>
     <link rel="stylesheet" href="main.css">
     <script type="text/javascript" src="/eel.js"></script>
-    <script src="retrieveTrans.js"></script>
     <style>
         h1 {
             text-align: center;
@@ -47,35 +46,38 @@
         <button id="retrieve-btn">Retrieve Transactions</button>
     </div>
     <script>
-        document.getElementById("back-btn").addEventListener("click", function() {
-            // Add your register button functionality here
-            window.location.href = "main.html";
-        });
-
-        document.getElementById("pubKey-button").addEventListener("click", async function() {
-            let pubKeyPath = await eel.select_file()();
-            document.getElementById("pubKey-dir").innerHTML = pubKeyPath;
-        });
-
-        document.getElementById("privKey-button").addEventListener("click", async function() {
-            let privKeyPath = await eel.select_file_directory()();
-            document.getElementById("privKey-dir").innerHTML = privKeyPath;
-        });
-
-        document.getElementById("retrieve-btn").addEventListener("click", async function() {
-            let pubKeyPath = document.getElementById("pubKey-dir").innerHTML;
-            let privKeyPath = document.getElementById("privKey-dir").innerHTML;
-            let transactions = await eel.get_user_transactions(pubKeyPath, privKeyPath)();
-
-            let dataDiv = document.querySelector(".data");
-            dataDiv.innerHTML = "";
-
-            transactions.forEach(transaction => {
-                let transactionDiv = document.createElement("div");
-                transactionDiv.innerHTML = JSON.stringify(transaction, null, 2);
-                dataDiv.appendChild(transactionDiv);
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById("back-btn").addEventListener("click", function() {
+                window.location.href = "main.html";
             });
-        });
+
+            document.getElementById("pubKey-button").addEventListener("click", async function() {
+                let pubKeyPath = await eel.select_file_directory()();
+                document.getElementById("pubKey-dir").innerHTML = pubKeyPath;
+            });
+
+            document.getElementById("privKey-button").addEventListener("click", async function() {
+                let privKeyPath = await eel.select_file_directory()();
+                document.getElementById("privKey-dir").innerHTML = privKeyPath;
+            });
+
+            document.getElementById("retrieve-btn").addEventListener("click", async function() {
+                let pubKeyPath = document.getElementById("pubKey-dir").innerHTML;
+                let privKeyPath = document.getElementById("privKey-dir").innerHTML;
+                let transactions = await eel.get_user_transactions_eel(pubKeyPath, privKeyPath)();
+                console.log("transactions:", transactions)
+
+                let dataDiv = document.querySelector(".data");
+                dataDiv.innerHTML = "";
+
+                transactions.forEach(transaction => {
+                    let transactionDiv = document.createElement("div");
+                    transactionDiv.innerHTML = JSON.stringify(transaction, null, 2);
+                    dataDiv.appendChild(transactionDiv);
+                });
+            });
+});
+
     </script>
 </body>
 </html>

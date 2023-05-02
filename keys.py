@@ -90,6 +90,13 @@ def generate_signiture(priv_dir, encrypted_data):
     signed_hash = signature.sign(hash)
     return signed_hash
 
+import base64
+import os
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
 def encrypt_transaction(sender_priv_key_pem, receiver_pub_key_pem, data):
     # Load private key
     private_key = serialization.load_pem_private_key(sender_priv_key_pem, password=None, backend=default_backend())
@@ -114,13 +121,14 @@ def encrypt_transaction(sender_priv_key_pem, receiver_pub_key_pem, data):
     nonce = os.urandom(12)
     encrypted_data = aesgcm.encrypt(nonce, str(data).encode('utf-8'), None)
     encrypted_data_b64 = base64.b64encode(encrypted_data).decode('utf-8')
+    nonce_b64 = base64.b64encode(nonce).decode('utf-8')
+
+    return {'ciphertext': encrypted_data_b64, 'nonce': nonce_b64}
 
 
-    return {'ciphertext': encrypted_data_b64, 'nonce': str(nonce)}
 
 
-
-def decrypt_transaction(sender_pub_key_pem, receiver_priv_key_pem, encrypted_data):
+def decrypt_transaction(sender_pub_key_pem, receiver_priv_key_pem, encrypted_data_dict):
     # Load public key
     public_key = serialization.load_pem_public_key(sender_pub_key_pem, backend=default_backend())
 
@@ -139,12 +147,15 @@ def decrypt_transaction(sender_pub_key_pem, receiver_priv_key_pem, encrypted_dat
         backend=default_backend()
     ).derive(shared_secret)
 
+    # Convert nonce and ciphertext from base64 to bytes
+    nonce_bytes = base64.b64decode(encrypted_data_dict['nonce'])
+    ciphertext_bytes = base64.b64decode(encrypted_data_dict['ciphertext'])
+
     # Decrypt data
     aesgcm = AESGCM(derived_key)
-    decrypted_data = aesgcm.decrypt(encrypted_data['nonce'], encrypted_data['ciphertext'], None)
+    decrypted_data = aesgcm.decrypt(nonce_bytes, ciphertext_bytes, None)
 
     return decrypted_data.decode('utf-8')
-
 
 def verification_function(pub_dir, signature, transaction):
     with open(pub_dir, 'rt') as f:
@@ -163,20 +174,29 @@ def verification_function(pub_dir, signature, transaction):
     except ValueError:
         return False
 
-def generate_transaction(sender_priv_key_filename, sender_pub_key_filename, data, receiver_pub_key_filename):
-    with open(sender_priv_key_filename, 'rb') as f:
-        sender_priv_key_pem = f.read()
+def generate_transaction(sender_priv_key_filename, sender_pub_key_filename, data, receiver_pub_key_filename, isUser=None):
+    try:
+        with open(sender_priv_key_filename, 'rb') as f:
+            sender_priv_key_pem = f.read()
 
-    with open(sender_pub_key_filename, 'rb') as f:
-        sender_pub_key_pem = f.read()
+        with open(sender_pub_key_filename, 'rb') as f:
+            sender_pub_key_pem = f.read()
 
-    with open(receiver_pub_key_filename, 'rb') as f:
-        receiver_pub_key_pem = f.read()
+        with open(receiver_pub_key_filename, 'rb') as f:
+            receiver_pub_key_pem = f.read()
 
-    encrypted_t = encrypt_transaction(sender_priv_key_pem, receiver_pub_key_pem, data)
-    print(f"Encrypted Data: {encrypted_t}")
-    transaction = Transactions(sender_pub_key_filename, receiver_pub_key_filename, encrypted_t, generate_signiture(sender_priv_key_filename, encrypted_t))
-    return transaction
+        encrypted_t = encrypt_transaction(sender_priv_key_pem, receiver_pub_key_pem, data)
+        print(f"Encrypted Data: {encrypted_t} \n {sender_pub_key_filename}\n \n")
+        if isUser == True:
+            transaction = Transactions(sender_pub_key_filename, receiver_pub_key_filename, encrypted_t, generate_signiture(sender_priv_key_filename, encrypted_t), True)
+        else:
+            transaction = Transactions(sender_pub_key_filename, receiver_pub_key_filename, encrypted_t, generate_signiture(sender_priv_key_filename, encrypted_t))
+            return transaction
+    except:
+        print(f"Error with {sender_priv_key_filename}")
+        return
+
+
 
 
 

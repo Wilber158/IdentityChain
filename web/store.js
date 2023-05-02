@@ -39,4 +39,8 @@ document.addEventListener('DOMContentLoaded', function() {
         const directory = await eel.select_file_directory()();
         document.getElementById("pv-dir").innerHTML = directory;
     });
+
+    document.getElementById("chain").addEventListener("click", function(){
+        window.location.href = "RetrieveTheChain.html"
+    } )
 });

@@ -17,6 +17,8 @@ from tkinter import filedialog
 import hashlib
 from transactions import generate_transaction_hash
 
+
+
 class P2PNetwork:
     def __init__(self):
         self.nodes = []
@@ -52,6 +54,9 @@ def save_network(network, filename='network.pickle'):
 def load_network(filename='network.pickle'):
     with open(filename, 'rb') as handle:
         return pickle.load(handle)
+    
+network = P2PNetwork()
+
 
 class FullNode:
     def __init__(self, key_id, key_folder):
@@ -192,7 +197,7 @@ def serialize_person_data(person_data):
 
     return json.dumps(person_data.__dict__, default=convert)
 
-def simulate(network, key_folder, new_nodes_queue):
+def simulateTransactions(network, new_nodes_queue):
     people = get_random_people()
     while True:
         # Check for new nodes in the queue
@@ -218,76 +223,28 @@ def simulate(network, key_folder, new_nodes_queue):
 
             light_node.send_transaction(transaction, network)
 
-            full_node = random.choice([n for n in network.nodes if isinstance(n, FullNode)])
+def simulateMining(network):
+    while True: 
+        time.sleep(10)
+        full_node = random.choice([n for n in network.nodes if isinstance(n, FullNode)])
+        full_node.mine_block()
+        new_block = full_node.blockchain.blocks[-1]
+        network.broadcast_block(new_block, full_node.blockchain.blockchain_size)  # Send the size
 
-            full_node.mine_block()
-            new_block = full_node.blockchain.blocks[-1]
-            network.broadcast_block(new_block, full_node.blockchain.blockchain_size)  # Send the size
+        # Save the blockchain
+        save_blockchain(full_node.blockchain)
+    
 
-            # Save the blockchain
-            save_blockchain(full_node.blockchain)
-
-
-'''
-network = P2PNetwork()
-@eel.expose
-def get_blockchain_data():
-    full_node = [n for n in network.nodes if isinstance(n, FullNode)][0]
-    blockchain_data = []
-
-    for block in full_node.blockchain.blocks:
-        transactions_data = [transaction.__dict__ for transaction in block.transactions]
-        block_data = {
-            'block_number': block.block_number,
-            'transactions': transactions_data,
-            'timestamp': block.timestamp,
-            'previous_hash': block.previous_hash,
-            'hash': block.hash
-        }
-        blockchain_data.append(block_data)
-
-    return blockchain_data
-
-@eel.expose
-def select_directory():
-    root = tk.Tk()
-    root.withdraw()  # hide the main window
-
-    # open a dialog box to select a directory
-    selected_directory = filedialog.askdirectory()
-
-    # store the selected directory as a string
-    selected_directory_str = str(selected_directory)
-
-    return selected_directory_str
-
-@eel.expose
-def select_file_directory():
-    # Create a Tkinter root window
-    root = tk.Tk()
-
-    # Hide the root window to avoid it displaying during the file selection process
-    root.withdraw()
-
-    # Open a file selection dialog and get the selected file path
-    selected_file = filedialog.askopenfilename()
-
-    # Show the selected file path
-    print("Selected file:", selected_file)
-
-    # Return the selected file path
-    return selected_file
-
-'''
-
-network = P2PNetwork()
 
 def main():
     global network
     print("Happening")
-    num_full_nodes = 3
+    num_full_nodes = 5
     num_light_nodes = 5
     key_folder = "keys"
+    loaded = True
+    for i in network.nodes:
+        print(i)
 
     # Create the folder if it doesn't exist
     if not os.path.exists(key_folder):
@@ -298,14 +255,16 @@ def main():
         network = load_network()
     except FileNotFoundError:
         network = P2PNetwork()
+        loaded = False
 
-    # Creating and adding nodes to the network
-    for i in range(num_full_nodes):
-        full_node = FullNode(i, key_folder)
-        network.add_node(full_node)
-    for i in range(num_light_nodes):
-        light_node = LightNode(i, key_folder)
-        network.add_node(light_node)
+    if not loaded:
+        # Creating and adding nodes to the network
+        for i in range(num_full_nodes):
+            full_node = FullNode(i, key_folder)
+            network.add_node(full_node)
+        for i in range(num_light_nodes):
+            light_node = LightNode(i, key_folder)
+            network.add_node(light_node)
 
     # Load the existing blockchain if it exists
     try:
@@ -318,10 +277,14 @@ def main():
 
     new_nodes_queue = queue.Queue()
 
-    # Start the simulation in a separate thread
-    simulation_thread = threading.Thread(target=simulate, args=(network, key_folder, new_nodes_queue))
-    simulation_thread.daemon = True  # Set the thread as a daemon to terminate with the main program
-    simulation_thread.start()
+    # Start the simulation for transactions in a separate thread
+    transaction_simulation_thread = threading.Thread(target=simulateTransactions, args=(network, new_nodes_queue))
+    transaction_simulation_thread.daemon = True  # Set the thread as a daemon to terminate with the main program
+    transaction_simulation_thread.start()
+
+    mining_simulation_thread = threading.Thread(target=simulateMining, args=(network,))
+    mining_simulation_thread.daemon = True
+    mining_simulation_thread.start()
         
     # Save the network after setting up the simulation
 
@@ -329,23 +292,19 @@ def main():
 
 
     while True:
-        time.sleep(20)  # Add a new user node every 5 seconds (for demonstration purposes)
-        key_id = len(network.lightnodes)
-        user_node = add_user_node(network, key_id, key_folder)
-        new_nodes_queue.put(user_node)
-
+        time.sleep(20)
         # Print blockchain for all full nodes
         for i, node in enumerate([n for n in network.nodes if isinstance(n, FullNode)]):
-            print(f"Blockchain for FullNode{i + 1}:")
+            print(f"________Blockchain for FullNode{i + 1}_______:")
             for block in node.blockchain.blocks:
-                print(f"  Block {block.block_number}:")
+                print(f"  Block {block.block_number}:\n\n\n")
                 
                 # Loop through the transactions in the block
                 for transaction in block.transactions:
-                    print(f"    Transaction:")
-                    print(f"      Sender Public Key: {transaction.sender_public_key}")
-                    print(f"      Receiver Public Key: {transaction.receiver_public_key}")
-                    print(f"Transaction contents: {transaction.transaction_data}")
+                    print(f"    Transaction: {transaction.transaction_data} \n\n\n")
+                    print(f"      Sender Public Key: {transaction.sender_public_key} \n")
+                    print(f"      Receiver Public Key: {transaction.receiver_public_key}\n")
+                    print(f"Transaction contents: {transaction.transaction_data}\n")
                 
                 print(f"Timestamp: {block.timestamp} \n previous_hash: {block.previous_hash} \n hash: {block.hash}")
 
@@ -441,6 +400,58 @@ def get_user_transactions(user_pubkey_file, user_privkey_file):
 
 def run_main_in_thread():
     main()
+    
+
+
+
+@eel.expose
+def get_blockchain_data():
+    full_node = [n for n in network.nodes if isinstance(n, FullNode)][0]
+    blockchain_data = []
+
+    for block in full_node.blockchain.blocks:
+        transactions_data = [transaction.__dict__ for transaction in block.transactions]
+        block_data = {
+            'block_number': block.block_number,
+            'transactions': transactions_data,
+            'timestamp': block.timestamp,
+            'previous_hash': block.previous_hash,
+            'hash': block.hash
+        }
+        blockchain_data.append(block_data)
+
+    return blockchain_data
+
+@eel.expose
+def select_directory():
+    root = tk.Tk()
+    root.withdraw()  # hide the main window
+
+    # open a dialog box to select a directory
+    selected_directory = filedialog.askdirectory()
+
+    # store the selected directory as a string
+    selected_directory_str = str(selected_directory)
+
+    return selected_directory_str
+
+@eel.expose
+def select_file_directory():
+    # Create a Tkinter root window
+    root = tk.Tk()
+
+    # Hide the root window to avoid it displaying during the file selection process
+    root.withdraw()
+
+    # Open a file selection dialog and get the selected file path
+    selected_file = filedialog.askopenfilename()
+
+    # Show the selected file path
+    print("Selected file:", selected_file)
+
+    # Return the selected file path
+    return selected_file
+
 
 if __name__ == "__main__":
     eel.init("web")
@@ -448,3 +459,5 @@ if __name__ == "__main__":
     main_thread = threading.Thread(target=run_main_in_thread)
     main_thread.start()
     eel.start("main.html")
+
+

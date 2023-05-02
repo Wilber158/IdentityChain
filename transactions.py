@@ -5,13 +5,14 @@ from Crypto.Protocol.KDF import HKDF
 from Crypto.Hash import SHA256
 from Crypto.Random import get_random_bytes
 import json
-
+import hashlib
 class Transactions:
-    def __init__(self, sender, receiver, transaction, signature):
+    def __init__(self, sender, receiver, transaction, signature, isUser=None):
         self.sender_public_key = sender
         self.receiver_public_key = receiver#none if first transaction
         self.signature = signature
         self.transaction_data = transaction #only this field is encrypted
+        self.isUser = isUser
     
     def verify_signature(self):
         return verification_function(self.sender_public_key, self.signature, self.transaction_data)
@@ -37,3 +38,9 @@ def verification_function(pub_dir, signature, transaction):
         return True
     except ValueError:
         return False
+
+def generate_transaction_hash(transaction):
+    # generate a hash value of the transaction data
+    encrypted_hex = json.dumps(transaction.transaction_data)
+    hash_value = hashlib.sha256(encrypted_hex.encode()).hexdigest()
+    return hash_value

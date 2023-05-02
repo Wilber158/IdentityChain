@@ -16,15 +16,15 @@ class BlockChain:
         self.genesis = Block(0, [Transactions(None, None, None, None)], None, time.time(), 0)
         self.blocks = [self.genesis]
         self.blockchain_size = 1
-        self.difficulty = 3
+        self.difficulty = 2
     
     def addBlock(self, transactions, nonce=0):
-        #verify transaction before adding to blockchain
-        for transaction in transactions:
-            if not transaction.verify_signature():
-                print("Invalid transaction signature")
-                return
-
+        #Check for double spending        
+        for block in self.blocks:
+            for t in transactions:
+                if t in block.transactions:
+                    print("Transaction already in chain!")
+                    return
 
         previous_hash = self.blocks[-1].hash
         #creating the block
