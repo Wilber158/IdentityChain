@@ -68,6 +68,9 @@ document.addEventListener("DOMContentLoaded", function() {
         document.getElementById("rc-dir").innerHTML = directory;
     });
 
+    document.getElementById("chain").addEventListener("click", function(){
+      window.location.href = "RetrieveTheChain.html"
+    })
   
   });
   

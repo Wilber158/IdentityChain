@@ -146,7 +146,16 @@ class FullNode:
             temp_blockchain_instance.blockchain_size = len(temp_blockchain)
 
             if temp_blockchain_instance.is_chain_valid():
-                self.blockchain = temp_blockchain_instance
+                self.blockchain = temp_blockchain_instance\
+    
+    def retreive_transactions(self, public_key_dir):
+        retreived = []
+        for block in self.blockchain.blocks:
+            for transaction in block.transactions:
+                if transaction.sender_public_key == public_key_dir or transaction.receiver_public_key == public_key_dir:
+                    retreived.append(transaction)
+        
+        return retreived
 
 
 class LightNode:
@@ -223,9 +232,20 @@ def simulateTransactions(network, new_nodes_queue):
 
             light_node.send_transaction(transaction, network)
 
+def decryptTransactions(private_key, transactions):
+    info = []
+    for i in transactions:
+        encrypted_data = i.transaction_data
+        sender_public = i.sender_public_key
+        decrypted_data = keys.decrypt_transaction(sender_public, private_key, encrypted_data)
+        print(decrypted_data)
+        info.append(decrypted_data)
+    return info
+
+
 def simulateMining(network):
     while True: 
-        time.sleep(10)
+        time.sleep(5)
         full_node = random.choice([n for n in network.nodes if isinstance(n, FullNode)])
         full_node.mine_block()
         new_block = full_node.blockchain.blocks[-1]
@@ -233,7 +253,144 @@ def simulateMining(network):
 
         # Save the blockchain
         save_blockchain(full_node.blockchain)
+
+@eel.expose
+def create_user_node(seed, file_name, file_dir):
+    priv_dir = os.path.join(file_dir, f"{file_name}.pem")
+    pub_dir = os.path.join(file_dir, f"{file_name}_pub.pem")
+    print(f" Private key: {priv_dir}")
+    print(pub_dir)
+    print(f"{seed} type: {type(seed)}")
+    keys.generate_ecc_private_key(seed, priv_dir)
+    keys.generate_public_key(priv_dir, pub_dir)
+    node = UserNode(priv_dir, pub_dir)
+    network.add_user_node(node)
+    print("Added to network")
+    save_network(network)
+    print(f"{network.userNodes}")
+
+@eel.expose
+def user_transaction(sender_privkey_file, sender_pubkey_file, receiver_pubkey_file, person_data_json, share_with_self):
+    print(f"From GUI: {sender_privkey_file} {sender_pubkey_file}")
+    print(f"Size: {len(network.userNodes)}")
+    for user in network.userNodes:
+        print(f"User Priv: {user.privkey_file} \n User_Pub:  {user.pubkey_file}")
     
+    user_node = next((node for node in network.userNodes if node.privkey_file == sender_privkey_file and node.pubkey_file == sender_pubkey_file), None)
+
+    if user_node:
+        if share_with_self:
+            receiver_pubkey_file = sender_pubkey_file
+
+        transaction = user_node.create_transaction(receiver_pubkey_file, person_data_json)
+        user_node.send_transaction(transaction, network)
+        return "Transaction sent successfully."
+    else:
+        return "User node not found."
+
+@eel.expose
+def user_share_transaction(sender_privkey_file, sender_pubkey_file, receiver_pubkey_file, person_data_json):
+    print(f"From GUI: {sender_privkey_file} {sender_pubkey_file} \n Receiver:{receiver_pubkey_file}")
+    print(f"Size: {len(network.userNodes)}")
+    for user in network.userNodes:
+        print(f"User Priv: {user.privkey_file} \n User_Pub:  {user.pubkey_file}")
+
+    user_node = next((node for node in network.userNodes if node.privkey_file.replace("\\", "/") == sender_privkey_file.replace("\\", "/") and node.pubkey_file.replace("\\", "/") == sender_pubkey_file.replace("\\", "/")), None)
+    receiver_node = next((node for node in network.userNodes if node.pubkey_file == receiver_pubkey_file), None)
+    
+    if user_node and receiver_node:
+        transaction = user_node.create_transaction(receiver_pubkey_file, person_data_json)
+        user_node.send_transaction(transaction, network)
+        print("Sent")
+        return "Transaction sent successfully."
+    else:
+        return "User node not found."
+
+    
+@eel.expose
+def get_user_transactions_eel(user_pubkey_file, user_privkey_file):
+    return get_user_transactions(user_pubkey_file, user_privkey_file)
+
+def get_user_transactions(user_pubkey_file, user_privkey_file):
+    user_transactions = []
+
+    # Load user's private key
+    with open(user_privkey_file, 'rb') as f:
+        user_priv_key_pem = f.read()
+
+    # Load user's public key
+    with open(user_pubkey_file, 'rb') as f:
+        user_pub_key_pem = f.read()
+ 
+    # Find a full node to access the blockchain
+    full_node = next((node for node in network.nodes if isinstance(node, FullNode)), None)
+
+    if full_node:
+        for block in full_node.blockchain.blocks:
+            for transaction in block.transactions:
+                if transaction.sender_public_key == user_pubkey_file or transaction.receiver_public_key== user_pubkey_file:
+                    print("Matching transaction found")
+                    print(f"Matching transaction {transaction}")
+                    # Load sender's public key
+                    with open(transaction.sender_public_key, 'rb') as f:
+                        sender_pub_key_pem = f.read()
+
+                    decrypted_data = keys.decrypt_transaction(sender_pub_key_pem, user_priv_key_pem, transaction.transaction_data)
+                    print(f"Decrypted: {decrypted_data}")
+                    user_transactions.append(decrypted_data)
+
+    return user_transactions
+
+
+
+
+@eel.expose
+def get_blockchain_data():
+    full_node = [n for n in network.nodes if isinstance(n, FullNode)][0]
+    blockchain_data = []
+
+    for block in full_node.blockchain.blocks:
+        transactions_data = [transaction.__dict__ for transaction in block.transactions]
+        block_data = {
+            'block_number': block.block_number,
+            'transactions': transactions_data,
+            'timestamp': block.timestamp,
+            'previous_hash': block.previous_hash,
+            'hash': block.hash
+        }
+        blockchain_data.append(block_data)
+
+    return blockchain_data
+
+@eel.expose
+def select_directory():
+    root = tk.Tk()
+    root.withdraw()  # hide the main window
+
+    # open a dialog box to select a directory
+    selected_directory = filedialog.askdirectory()
+
+    # store the selected directory as a string
+    selected_directory_str = str(selected_directory)
+
+    return selected_directory_str
+
+@eel.expose
+def select_file_directory():
+    # Create a Tkinter root window
+    root = tk.Tk()
+
+    # Hide the root window to avoid it displaying during the file selection process
+    root.withdraw()
+
+    # Open a file selection dialog and get the selected file path
+    selected_file = filedialog.askopenfilename()
+
+    # Show the selected file path
+    print("Selected file:", selected_file)
+
+    # Return the selected file path
+    return selected_file
 
 
 def main():
@@ -308,149 +465,11 @@ def main():
                 
                 print(f"Timestamp: {block.timestamp} \n previous_hash: {block.previous_hash} \n hash: {block.hash}")
 
-@eel.expose
-def create_user_node(seed, file_name, file_dir):
-    priv_dir = os.path.join(file_dir, f"{file_name}.pem")
-    pub_dir = os.path.join(file_dir, f"{file_name}_pub.pem")
-    print(f" Private key: {priv_dir}")
-    print(pub_dir)
-    print(f"{seed} type: {type(seed)}")
-    keys.generate_ecc_private_key(seed, priv_dir)
-    keys.generate_public_key(priv_dir, pub_dir)
-    node = UserNode(priv_dir, pub_dir)
-    network.add_user_node(node)
-    print("Added to network")
-    save_network(network)
-    print(f"{network.userNodes}")
 
-@eel.expose
-def user_transaction(sender_privkey_file, sender_pubkey_file, receiver_pubkey_file, person_data_json, share_with_self):
-    print(f"From GUI: {sender_privkey_file} {sender_pubkey_file}")
-    print(f"Size: {len(network.userNodes)}")
-    for user in network.userNodes:
-        print(f"User Priv: {user.privkey_file} \n User_Pub:  {user.pubkey_file}")
-    
-    user_node = next((node for node in network.userNodes if node.privkey_file == sender_privkey_file and node.pubkey_file == sender_pubkey_file), None)
-
-    if user_node:
-        if share_with_self:
-            receiver_pubkey_file = sender_pubkey_file
-
-        transaction = user_node.create_transaction(receiver_pubkey_file, person_data_json)
-        user_node.send_transaction(transaction, network)
-        return "Transaction sent successfully."
-    else:
-        return "User node not found."
-
-@eel.expose
-def user_share_transaction(sender_privkey_file, sender_pubkey_file, receiver_pubkey_file, person_data_json):
-    print(f"From GUI: {sender_privkey_file} {sender_pubkey_file} \n Receiver:{receiver_pubkey_file}")
-    print(f"Size: {len(network.userNodes)}")
-    for user in network.userNodes:
-        print(f"User Priv: {user.privkey_file} \n User_Pub:  {user.pubkey_file}")
-
-    user_node = next((node for node in network.userNodes if node.privkey_file.replace("\\", "/") == sender_privkey_file.replace("\\", "/") and node.pubkey_file.replace("\\", "/") == sender_pubkey_file.replace("\\", "/")), None)
-    receiver_node = next((node for node in network.userNodes if node.pubkey_file == receiver_pubkey_file), None)
-    
-    if user_node and receiver_node:
-        transaction = user_node.create_transaction(receiver_pubkey_file, person_data_json)
-        user_node.send_transaction(transaction, network)
-        print("Sent")
-        return "Transaction sent successfully."
-    else:
-        return "User node not found."
-
-    
-@eel.expose
-def get_user_transactions_eel(user_pubkey_file, user_privkey_file):
-    return get_user_transactions(user_pubkey_file, user_privkey_file)
-
-def get_user_transactions(user_pubkey_file, user_privkey_file):
-    user_transactions = []
-
-    # Load user's private key
-    with open(user_privkey_file, 'rb') as f:
-        user_priv_key_pem = f.read()
-
-    # Load user's public key
-    with open(user_pubkey_file, 'rb') as f:
-        user_pub_key_pem = f.read()
- 
-    # Find a full node to access the blockchain
-    full_node = next((node for node in network.nodes if isinstance(node, FullNode)), None)
-
-    if full_node:
-        print("Full node found")
-        for block in full_node.blockchain.blocks:
-            print("Block:", block)
-            for transaction in block.transactions:
-                print("Transaction:", transaction)
-                if transaction.sender_public_key == user_pubkey_file or transaction.receiver_public_key== user_pubkey_file:
-                    print("Matching transaction found")
-                    
-                    # Load sender's public key
-                    with open(transaction.sender_public_key, 'rb') as f:
-                        sender_pub_key_pem = f.read()
-
-                    decrypted_data = keys.decrypt_transaction(sender_pub_key_pem, user_priv_key_pem, transaction.transaction_data)
-                    transaction.transaction_data = json.loads(decrypted_data)  # Parse the decrypted data as JSON
-                    user_transactions.append(transaction)
-
-    return user_transactions
 
 def run_main_in_thread():
     main()
-    
 
-
-
-@eel.expose
-def get_blockchain_data():
-    full_node = [n for n in network.nodes if isinstance(n, FullNode)][0]
-    blockchain_data = []
-
-    for block in full_node.blockchain.blocks:
-        transactions_data = [transaction.__dict__ for transaction in block.transactions]
-        block_data = {
-            'block_number': block.block_number,
-            'transactions': transactions_data,
-            'timestamp': block.timestamp,
-            'previous_hash': block.previous_hash,
-            'hash': block.hash
-        }
-        blockchain_data.append(block_data)
-
-    return blockchain_data
-
-@eel.expose
-def select_directory():
-    root = tk.Tk()
-    root.withdraw()  # hide the main window
-
-    # open a dialog box to select a directory
-    selected_directory = filedialog.askdirectory()
-
-    # store the selected directory as a string
-    selected_directory_str = str(selected_directory)
-
-    return selected_directory_str
-
-@eel.expose
-def select_file_directory():
-    # Create a Tkinter root window
-    root = tk.Tk()
-
-    # Hide the root window to avoid it displaying during the file selection process
-    root.withdraw()
-
-    # Open a file selection dialog and get the selected file path
-    selected_file = filedialog.askopenfilename()
-
-    # Show the selected file path
-    print("Selected file:", selected_file)
-
-    # Return the selected file path
-    return selected_file
 
 
 if __name__ == "__main__":
@@ -459,5 +478,3 @@ if __name__ == "__main__":
     main_thread = threading.Thread(target=run_main_in_thread)
     main_thread.start()
     eel.start("main.html")
-
-

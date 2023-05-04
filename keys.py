@@ -22,6 +22,12 @@ from cryptography.hazmat.primitives.hmac import HMAC
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.backends import default_backend
+import base64
+import os
+from cryptography.hazmat.primitives.asymmetric import ec
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 #generate secret phrases
 @eel.expose
@@ -90,13 +96,6 @@ def generate_signiture(priv_dir, encrypted_data):
     signed_hash = signature.sign(hash)
     return signed_hash
 
-import base64
-import os
-from cryptography.hazmat.primitives.asymmetric import ec
-from cryptography.hazmat.primitives import serialization, hashes
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
 def encrypt_transaction(sender_priv_key_pem, receiver_pub_key_pem, data):
     # Load private key
     private_key = serialization.load_pem_private_key(sender_priv_key_pem, password=None, backend=default_backend())
@@ -124,8 +123,6 @@ def encrypt_transaction(sender_priv_key_pem, receiver_pub_key_pem, data):
     nonce_b64 = base64.b64encode(nonce).decode('utf-8')
 
     return {'ciphertext': encrypted_data_b64, 'nonce': nonce_b64}
-
-
 
 
 def decrypt_transaction(sender_pub_key_pem, receiver_priv_key_pem, encrypted_data_dict):
@@ -186,7 +183,7 @@ def generate_transaction(sender_priv_key_filename, sender_pub_key_filename, data
             receiver_pub_key_pem = f.read()
 
         encrypted_t = encrypt_transaction(sender_priv_key_pem, receiver_pub_key_pem, data)
-        print(f"Encrypted Data: {encrypted_t} \n {sender_pub_key_filename}\n \n")
+        print(f"Encrypted Data: {encrypted_t} \n Sender: {sender_pub_key_filename}\n Receiver:  \n")
         if isUser == True:
             transaction = Transactions(sender_pub_key_filename, receiver_pub_key_filename, encrypted_t, generate_signiture(sender_priv_key_filename, encrypted_t), True)
         else:
